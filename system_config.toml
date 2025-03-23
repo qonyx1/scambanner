@@ -1,0 +1,10 @@
+[discord]
+investigation_team_guild_id = 1234  ## set this to the main server, it will check if they have the role in this guild
+investigation_team_role_id = 1234   ## set this to what roleid is required to create cases
+bot_name = "shooterwashere"   ## what the bot refers to itself as (if speaking in 1st person for some reason)
+
+[api]
+master_password = "change_me_please_on_onfreakmaster"   ## let's the API distinguish between a random person and the discord bot
+
+[general]
+debug_mode = true

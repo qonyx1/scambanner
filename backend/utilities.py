@@ -1,8 +1,13 @@
 import uuid
-import base64
+import base64, random, string
 
 class Generate:
-    def gen_uuid(length:int=6)->str:
-        uid = uuid.uuid4()
-        b64 = base64.urlsafe_b64encode(uid.bytes).decode('utf-8')
-        return b64[:length]
+    def gen_id(length:int=32)->str:
+        return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+    
+class SystemConfig:
+    import tomli
+    with open("../system_config.toml", mode="rb") as fp:
+        system_config = tomli.load(fp) or None
+    
+        
