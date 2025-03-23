@@ -1,24 +1,13 @@
-from pymongo import MongoClient
+from fastapi import FastAPI
+from routers import cases
 
-# Connect to MongoDB
-client = MongoClient('mongodb://127.0.0.1:27017/')
+app = FastAPI(
+    title="MarketSec",
+    description="MarketSec is an open-source project that lets you crossban scammers."
+)
 
-# Access the database
-db = client['tmp_discord']
+app.include_router(cases.router)
 
-# Access the collection
-collection = db['collection']
-
-# Insert a document
-document = {"name": "John", "age": 30, "city": "New York"}
-collection.insert_one(document)
-
-# Query the document
-result = collection.find_one({"name": "John"})
-print(result)
-
-# Update the document
-collection.update_one({"name": "John"}, {"$set": {"age": 31}})
-
-# Delete the document
-collection.delete_one({"name": "John"})
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
