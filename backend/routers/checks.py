@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from data import Data
+from main import Data
 import logger
-
 database = Data.database
 
 router = APIRouter(prefix="/checks", tags=["checks"])
@@ -22,7 +21,7 @@ async def check_id(request: CheckID):
             }
         else:
             return {
-                "code": 2,
+                "code": 1,
                 "body": "No case found for this member."
             }
 

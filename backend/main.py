@@ -4,6 +4,7 @@ from routers import cases, checks
 import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
+from ..data import Data
 
 app = FastAPI(
     title=system_config["discord"]["bot_name"] or "Scambanner",

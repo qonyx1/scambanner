@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from data import Data
+from typing import List
+from main import Data
 import logger
 import datetime
 from utilities import Generate, SystemConfig
@@ -13,9 +14,10 @@ class CaseID(BaseModel):
 
 class CreateCase(BaseModel):
     master_password: str = Field(min_length=12, max_length=999999999999999)
-    accused_member: str
-    investigator_member: str
+    accused_member: int
+    investigator_member: int
     reason: str
+    proof: List[str] = []
 
 class DeleteCase(BaseModel):
     master_password: str = Field(min_length=12, max_length=999999999999999)
@@ -97,9 +99,9 @@ async def create_case(request: CreateCase):
             "accused": request.accused_member,
             "investigator": request.investigator_member,
             "reason": request.reason,
-            "created_at": int(datetime.datetime.now().timestamp())
+            "created_at": int(datetime.datetime.now().timestamp()),
+            "proof": request.proof
         })
-
     except Exception as f:
         logger.error(f"[CREATE_CASE] {f}")
         return {
