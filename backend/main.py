@@ -4,7 +4,6 @@ from routers import cases, checks
 import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
-from ..data import Data
 
 app = FastAPI(
     title=system_config["discord"]["bot_name"] or "Scambanner",
@@ -21,7 +20,15 @@ async def root():
         "body": f"{system_config["discord"]["bot_name"] or "Scambanner"} API is running."
     }
 
-if __name__ == "__main__":
-    logger.ok("Beginning FastAPI server..", debug=True)
+if __name__ == "__main__":     # Main starter
+
+    logger.warn("Checking configuration", debug=True)
+    if "https://" not in system_config["api"]["url"]:
+        exit(logger.error("Invalid URL provided in configuration."))
+
+    logger.ok("Starting FastAPI server", debug=True)
     logger.ok("FastAPI server now serving at 127.0.0.1:8000")
+
+
+
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level=0)

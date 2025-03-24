@@ -5,6 +5,8 @@ bot_name = "API"   ## what the bot refers to itself as (if speaking in 1st perso
 
 [api]
 master_password = "master_password_for_the_api"   ## let's the API distinguish between a random person and the discord bot
+mongodb_db_name = "database"
+url = "htts://localhost:8000/"        ## it MUST include the slash at the end AND include the protocol at the beginning (https://)
 
 [general]
 debug_mode = true

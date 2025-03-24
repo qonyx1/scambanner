@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from main import Data
+from data import Data
 import logger
+
 database = Data.database
 
 router = APIRouter(prefix="/checks", tags=["checks"])
