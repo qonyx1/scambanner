@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+tomli
+uuid
+pymongo
+pydantic
+typing
+python-dotenv
+aiohttp
+aiofiles
+cloudinary

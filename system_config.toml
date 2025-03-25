@@ -6,8 +6,9 @@ bot_name = "API"   ## what the bot refers to itself as (if speaking in 1st perso
 [api]
 master_password = "master_password_for_the_api"   ## let's the API distinguish between a random person and the discord bot
 mongodb_db_name = "database"
+proof_proxy = true   ##  do you want to upload all discord proofs to an external site? (edit .env) 
 
-url = "https://localhost:6565/"        ## it MUST include the slash at the end AND include the protocol at the beginning (https://)
+url = "https://127.0.0.1:6565"        ## it MUST include the slash at the end AND include the protocol at the beginning (https://)
 port = 6565     ##  same port used in the url
 
 [general]

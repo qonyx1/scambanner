@@ -1,5 +1,5 @@
 import nextcord
-from ..utility import logger
+from utility import logger
 from nextcord.ext import commands
 
 class ExceptionHandler(commands.Cog):

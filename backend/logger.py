@@ -24,6 +24,7 @@ class format(logging.Formatter):
 handler.setFormatter(format())
 logger.addHandler(handler)
 
+
 def warn(msg, debug:bool=False):
     if not system_config["general"]["debug_mode"] and debug: return
     logger.warning(f"{COLORS['WARN']}[WARN]{COLORS['RESET']} {msg.upper()}")
