@@ -9,7 +9,7 @@ url = system_config["api"]["url"]
 
 from nextcord.ext import commands
 
-class Cases(commands.Cog):
+class Users(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -28,6 +28,8 @@ class Cases(commands.Cog):
                 "accused_member": int(str(user.id).strip("<@!>"))
             }
         )
+
+        logger.output(request)
 
         if request.status_code == 200:
             request = request.json()
@@ -50,7 +52,7 @@ class Cases(commands.Cog):
                     
                     embed = nextcord.Embed(
                         title=f"📜 Case from {responsible_guild.name} ({responsible_guild.id})",
-                        color=nextcord.Color.green()
+                        color=nextcord.Color.red()
                     )
 
                     embed.add_field(
@@ -95,4 +97,4 @@ class Cases(commands.Cog):
                 await interaction.response.send_message("*This member has no active cases against them.*")
             
 def setup(bot):
-    bot.add_cog(Cases(bot))
+    bot.add_cog(Users(bot))
