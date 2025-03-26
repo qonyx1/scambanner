@@ -5,7 +5,7 @@ import base64, random, string
 class Generate:
     @staticmethod
     def gen_id(length: int = 8) -> str:
-        characters = string.ascii_letters + string.digits + "!@$%^&"
+        characters = string.ascii_letters + string.digits + "@$%&"
         return ''.join(random.choice(characters) for _ in range(length))
     
 class SystemConfig:
