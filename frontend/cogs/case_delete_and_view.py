@@ -25,6 +25,7 @@ class Cases(commands.Cog):
         case_request = requests.post(
             url = f"http://127.0.0.1:6565/cases/fetch_case",
             json = {
+                
                 "caseid": caseid
             }
         )
@@ -90,8 +91,8 @@ class Cases(commands.Cog):
 
 
 
-    @case.subcommand(name="fetch", description="Fetch a case from the database.")
-    async def user(self, interaction, caseid: str):
+    @case.subcommand(name="delete", description="Delete a case from the database.")
+    async def delete(self, interaction, caseid: str):
 
         await interaction.response.defer()
 
@@ -102,7 +103,15 @@ class Cases(commands.Cog):
             }
         )
 
-        if case_request.status_code == 200 and case_request.json().get("code") == 0:
+        delete_request = requests.post(
+            url = f"http://127.0.0.1:6565/cases/delete_case",
+            json = {
+                "master_password": system_config["api"]["master_password"],
+                "caseid": caseid
+            }
+        )
+
+        if delete_request.status_code == 200 and (delete_request.json())["code"] == 0 and case_request.status_code == 200 and case_request.json().get("code") == 0:
             case_request = (case_request.json()).get("case_data")
 
             embed = nextcord.Embed(

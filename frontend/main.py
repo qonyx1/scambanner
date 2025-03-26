@@ -2,6 +2,7 @@ import nextcord
 from nextcord.ext import commands
 from dotenv import load_dotenv
 import os
+from utility import logger
 
 load_dotenv()
 client = commands.Bot(intents=nextcord.Intents.all())
@@ -14,10 +15,10 @@ def load_cogs():
             for filename in files:
                 if filename.endswith(".py"):
                     cog_path = folder_path.replace('./', '').replace(os.sep, '.')
-                    print(f'\033[32m[OK]\033[0m Loading cog: {filename}')
+                    logger.output(f'Loading cog: {filename}')
                     client.load_extension(f"{cog_path}.{filename[:-3]}")
                 else:
-                    print(f'\033[38;5;214m[SKIP]\033[0m Skipping file: {filename}')
+                    logger.warn(f'Skipping file: {filename}')
 
 
 @client.event
