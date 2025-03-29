@@ -10,3 +10,4 @@ python-dotenv
 aiohttp
 aiofiles
 cloudinary
+pystyle

@@ -1,15 +1,29 @@
+# Discord Configuration
 [discord]
-investigation_team_guild_id = 1234  ## set this to the main server, it will check if they have the role in this guild
-investigation_team_role_id = 1234   ## set this to what roleid is required to create cases
-bot_name = "API"   ## what the bot refers to itself as (if speaking in 1st person for some reason)
+main_guild_id = 1355417699634778133  # Set this to the main guild
+main_channel_id = 1355417700133896347  # All cases made by servers will be sent to this channel for manual review ("Quality Assurance").
+                                       # It's assumed the people making cases are not the same people who will be reviewing them.
+bot_name = "API"  # What the bot refers to itself as (if speaking in 1st person for some reason)
 
+
+# --------------->
+
+
+# API Configuration
 [api]
-master_password = "master_password_for_the_api"   ## let's the API distinguish between a random person and the discord bot
+master_password = "master_password_for_the_api"  # Lets the API distinguish between a random person and the Discord bot
 mongodb_db_name = "database"
-proof_proxy = true   ##  do you want to upload all discord proofs to an external site? (edit .env) 
+proof_proxy = true  # Do you want to upload all Discord proofs to an external site? (Edit .env)
 
-url = "https://127.0.0.1:6565"        ## it MUST include the slash at the end AND include the protocol at the beginning (https://)
-port = 6565     ##  same port used in the url
+url = "https://127.0.0.1:8000"  # It MUST include the slash at the end AND include the protocol at the beginning (https://)
+                                # NOTE: It's assumed that you're using 127.0.0.1; you will need to heavily modify the codebase if you're not.
+port = 8000  # Same port used in the URL
 
+
+# --------------->
+
+
+# General Settings
 [general]
 debug_mode = true
+version = "1.0.0"

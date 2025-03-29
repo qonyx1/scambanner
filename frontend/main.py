@@ -3,9 +3,28 @@ from nextcord.ext import commands
 from dotenv import load_dotenv
 import os
 from utility import logger
+from utilities import SystemConfig
+system_config = SystemConfig.system_config
 
 load_dotenv()
 client = commands.Bot(intents=nextcord.Intents.all())
+text = rf"""
+
+                          _                                 
+                         | |                                
+  ___  ___ __ _ _ __ ___ | |__   __ _ _ __  _ __   ___ _ __ 
+ / __|/ __/ _` | '_ ` _ \| '_ \ / _` | '_ \| '_ \ / _ \ '__|
+ \__ \ (_| (_| | | | | | | |_) | (_| | | | | | | |  __/ |   
+ |___/\___\__,_|_| |_| |_|_.__/ \__,_|_| |_|_| |_|\___|_|   
+                                                            
+     Beginning execution | v{system_config["general"]["version"]} | github.com/qonyx1
+
+     
+
+"""
+from pystyle import Center
+print(Center.XCenter(text))
+
 
 def load_cogs():
     for folder in ["./cogs", "./listeners"]:
@@ -15,15 +34,15 @@ def load_cogs():
             for filename in files:
                 if filename.endswith(".py"):
                     cog_path = folder_path.replace('./', '').replace(os.sep, '.')
-                    logger.output(f'Loading cog: {filename}')
+                    logger.warn(f'Loading cog: {filename}')
                     client.load_extension(f"{cog_path}.{filename[:-3]}")
                 else:
-                    logger.warn(f'Skipping file: {filename}')
+                    logger.error(f'Skipping file: {filename}')
 
 
 @client.event
 async def on_ready():
-    print(f"\033[32m[OK]\033[0m Bot online, connected")
+    logger.ok(f"Discord bot has been started")
 
 if __name__ == "__main__":
     load_cogs()

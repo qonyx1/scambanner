@@ -20,8 +20,8 @@ discord_cdn_domains = [
     "images-ext-1.discordapp.net"
 ]
 
-class CaseID(BaseModel):
-    caseid: str
+class case_id(BaseModel):
+    case_id: str
 
 class CreateCase(BaseModel):
     master_password: str = Field(min_length=12, max_length=999999999999999)
@@ -33,7 +33,7 @@ class CreateCase(BaseModel):
 
 class DeleteCase(BaseModel):
     master_password: str = Field(min_length=12, max_length=999999999999999)
-    caseid: str
+    case_id: str
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -55,6 +55,16 @@ async def download_file(url: str, dest: str):
 async def create_case(request: CreateCase):
     if request.master_password != system_config["api"]["master_password"]:
         return {"code": 1, "body": "You are not authorized to run this action."}
+    
+    try: # users cant have duplicate cases
+        result = database["cases"].find_one({"accused": str(request.accused_member)})
+        if result:
+            logger.warn("[CREATE_CASE] User already has a case against them, aborting..", debug=True)
+            return {"code": 1, "body": f"This user already has a case against them: {result["_id"]}", "case_id": result["_id"]}
+        
+        
+    except:
+        logger.error(f"[CREATE_CASE] Failed to check if the user has a case against them (line 64).")
 
     updated_proof_links = []
     temp_dir = "temp_downloads"
@@ -105,7 +115,7 @@ async def create_case(request: CreateCase):
     return {
         "code": 0,
         "body": "Case created successfully.",
-        "case_data": {"caseid": uuid, "time": int(datetime.datetime.now().timestamp())}
+        "case_data": {"case_id": uuid, "time": int(datetime.datetime.now().timestamp())}
     }
 
 @router.post("/delete_case")
@@ -114,10 +124,10 @@ async def delete_case(request: DeleteCase):
         return {"code": 1, "body": "You are not authorized to run this action."}
     
     try:
-        result = database["cases"].delete_one({"_id": request.caseid})
+        result = database["cases"].delete_one({"_id": request.case_id})
 
         if result.deleted_count >= 1:
-            return {"code": 0, "body": f"Case {request.caseid} deleted successfully."}
+            return {"code": 0, "body": f"Case {request.case_id} deleted successfully."}
         else:
             return {"code": 1, "body": "No case found with the provided case ID."}
     except Exception as e:
@@ -125,9 +135,9 @@ async def delete_case(request: DeleteCase):
         return {"code": 1, "body": "A database error has occurred while deleting the case."}
 
 @router.post("/fetch_case")
-async def fetch_case(request: CaseID):
+async def fetch_case(request: case_id):
     try:
-        case = database["cases"].find_one({"_id": request.caseid})
+        case = database["cases"].find_one({"_id": request.case_id})
         if not case:
             logger.warn("Received request from /fetch_case, case doesn't exist", debug=True)
             return {"code": 1, "body": "This case does not exist.", "found": False}

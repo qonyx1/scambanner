@@ -23,7 +23,7 @@ class Users(commands.Cog):
     async def user(self, interaction, user: nextcord.User):
         logger.output(int(str(user.id).strip("<@!>")))
         request = requests.post(
-            url = f"http://127.0.0.1:6565/checks/check_id",
+            url = f"http://127.0.0.1:{system_config["api"]["port"]}/checks/check_id",
             json = {
                 "accused_member": int(str(user.id).strip("<@!>"))
             }
@@ -37,9 +37,9 @@ class Users(commands.Cog):
                 await interaction.response.defer()
 
                 case_request = requests.post(
-                    url = f"http://127.0.0.1:6565/cases/fetch_case",
+                    url = f"http://{system_config["api"]["port"]}/cases/fetch_case",
                     json = {
-                        "caseid": request.get("case_id")
+                        "case_id": request.get("case_id")
                     }
                 )
 
@@ -79,11 +79,11 @@ class Users(commands.Cog):
                         inline=False
                     )
 
-                    evidence_links = case_request.get("proof", [])
-                    if evidence_links:
+                    proof_links = case_request.get("proof", [])
+                    if proof_links:
                         embed.add_field(
-                            name="🖼 Evidence",
-                            value="\n".join(evidence_links),
+                            name="🖼 Proof",
+                            value="\n".join(proof_links),
                             inline=False
                         )
 
