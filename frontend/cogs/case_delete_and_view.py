@@ -16,29 +16,15 @@ class Cases(commands.Cog):
         return
     
 
-<<<<<<< HEAD
     @case.subcommand(name="fetch", description="Fetch a case from the database.")
     async def user(self, interaction, case_id: str):
-=======
-    # TODO: Make http://ip:port sync with settings
-    @case.subcommand(name="fetch", description="Fetch a case from the database.")
-    async def user(self, interaction, caseid: str):
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
         await interaction.response.defer()
 
         case_request = requests.post(
-<<<<<<< HEAD
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
             json = {
-                
                 "case_id": case_id
-=======
-            url = f"http://127.0.0.1:6565/cases/fetch_case",
-            json = {
-                
-                "caseid": caseid
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
             }
         )
 
@@ -78,7 +64,6 @@ class Cases(commands.Cog):
                 inline=False
             )
 
-<<<<<<< HEAD
             proof_links = case_request.get("proof", [])
             if proof_links:
                 embed.add_field(
@@ -88,26 +73,11 @@ class Cases(commands.Cog):
                 )
 
             embed.set_footer(text=f"🆔: {case_id}")  
-=======
-            evidence_links = case_request.get("proof", [])
-            if evidence_links:
-                embed.add_field(
-                    name="🖼 Evidence",
-                    value="\n".join(evidence_links),
-                    inline=False
-                )
-
-            embed.set_footer(text=f"🆔: {caseid}")  
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
             await interaction.edit_original_message(embed=embed)
 
         else:
-<<<<<<< HEAD
             await interaction.followup.send("*This case does not exist within our records.*")
-=======
-            await interaction.edit_original_message("*This member has an active case against them, but we couldn't find the details.*")
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
 
 
@@ -120,29 +90,18 @@ class Cases(commands.Cog):
 
 
     @case.subcommand(name="delete", description="Delete a case from the database.")
-<<<<<<< HEAD
     async def delete(self, interaction, case_id: str):
-=======
-    async def delete(self, interaction, caseid: str):
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
         await interaction.response.defer()
 
         case_request = requests.post(
-<<<<<<< HEAD
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
             json = {
                 "case_id": case_id
-=======
-            url = f"http://127.0.0.1:6565/cases/fetch_case",
-            json = {
-                "caseid": caseid
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
             }
         )
 
         delete_request = requests.post(
-<<<<<<< HEAD
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/delete_case",
             json = {
                 "master_password": system_config["api"]["master_password"],
@@ -155,17 +114,6 @@ class Cases(commands.Cog):
         if delete_request.status_code == 200 and (delete_request.json())["code"] == 0 and case_request.status_code == 200 and case_request.json().get("code") == 0:
             case_request = (case_request.json()).get("case_data")
             # print(case_request)
-=======
-            url = f"http://127.0.0.1:6565/cases/delete_case",
-            json = {
-                "master_password": system_config["api"]["master_password"],
-                "caseid": caseid
-            }
-        )
-
-        if delete_request.status_code == 200 and (delete_request.json())["code"] == 0 and case_request.status_code == 200 and case_request.json().get("code") == 0:
-            case_request = (case_request.json()).get("case_data")
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
             embed = nextcord.Embed(
                 title="Case Deleted",
@@ -202,7 +150,6 @@ class Cases(commands.Cog):
                 inline=False
             )
 
-<<<<<<< HEAD
             proof_links = case_request.get("proof", [])
             if proof_links:
                 embed.add_field(
@@ -212,26 +159,11 @@ class Cases(commands.Cog):
                 )
 
             embed.set_footer(text=f"🆔: {case_id}")  
-=======
-            evidence_links = case_request.get("proof", [])
-            if evidence_links:
-                embed.add_field(
-                    name="🖼 Evidence",
-                    value="\n".join(evidence_links),
-                    inline=False
-                )
-
-            embed.set_footer(text=f"🆔: {caseid}")  
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
             await interaction.edit_original_message(embed=embed)
 
         else:
-<<<<<<< HEAD
             await interaction.followup.send("*I couldn't fetch this case or delete it.*")
-=======
-            await interaction.edit_original_message("*This member has an active case against them, but we couldn't find the details.*")
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
 
 

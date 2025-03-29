@@ -1,9 +1,10 @@
 # Discord Configuration
 [discord]
 main_guild_id = 1355417699634778133  # Set this to the main guild
-main_channel_id = 1355417700133896347  # All cases made by servers will be sent to this channel for manual review ("Quality Assurance").
+main_channel_id = 1355605890472083688  # All cases made by servers will be sent to this channel for manual review ("Quality Assurance").
                                        # It's assumed the people making cases are not the same people who will be reviewing them.
-bot_name = "API"  # What the bot refers to itself as (if speaking in 1st person for some reason)
+main_log_channel_id = 1355614903037198386
+bot_name = "Scammerban"  # What the bot refers to itself as (if speaking in 1st person for some reason)
 
 
 # --------------->
@@ -25,5 +26,5 @@ port = 8000  # Same port used in the URL
 
 # General Settings
 [general]
-debug_mode = true
+debug_mode = false
 version = "1.0.0"

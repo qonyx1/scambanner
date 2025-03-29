@@ -3,11 +3,8 @@ from nextcord.ext import commands
 from dotenv import load_dotenv
 import os
 from utility import logger
-<<<<<<< HEAD
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
-=======
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
 load_dotenv()
 client = commands.Bot(intents=nextcord.Intents.all())

@@ -173,12 +173,12 @@ class CaseCreation(commands.Cog):
         if message.guild and not message.author.bot:
             current_time = message.created_at.timestamp()
             user_id = message.author.id
-            if user_id in self.cooldown:
-                last_sent = self.cooldown[user_id]
-                if current_time - last_sent < 5:
-                    await message.delete()
-                    return
-            self.cooldown[user_id] = current_time
+            # if user_id in self.cooldown:
+            #     last_sent = self.cooldown[user_id]
+            #     if current_time - last_sent < 5:
+            #         await message.delete()
+            #         return
+            # self.cooldown[user_id] = current_time
             whitelist_entry = Data.database["bot"]["whitelists"].find_one({str(message.guild.id): {"$exists": True}})
             if whitelist_entry:
                 channel_id = whitelist_entry.get(str(message.guild.id))
@@ -192,11 +192,28 @@ class CaseCreation(commands.Cog):
                     match = re.search(pattern, content, re.DOTALL)
                     if match:
                         accused_id = match.group(1)
+                        request = requests.post(
+                            url = f"http://127.0.0.1:{system_config["api"]["port"]}/checks/check_id",
+                            json = {
+                                "accused_member": int(str(accused_id).strip("<@!>"))
+                            }
+                        )
+
+                        if request.json().get("code") == 0:
+                            v=nextcord.Embed(
+                                title="This user has a case against them",
+                                description="You cannot create a case against someone with an active case.",
+                                color=nextcord.Color.red()
+                            )
+                            v.add_field(name="Case ID", value=f"{request.json().get('case_id')}")
+                            await message.reply(embed=v)
+                            return
+                        
                         reason = match.group(2).strip()
                         proof_links = [link.strip() for link in match.group(3).split("\n") if link.strip()]
                         if not accused_id or not reason or not proof_links:
                             return
-                        logger.output(f"New case created: Accused ID: {accused_id}, Reason: {reason}, Proof: {proof_links}")
+                        logger.output(f"New case created: Accused ID: {accused_id}, Reason: {reason}, Proof: {proof_links}", debug=True)
                         try:
                             accused = await self.bot.fetch_user(int(accused_id))
                         except Exception:
@@ -215,9 +232,9 @@ class CaseCreation(commands.Cog):
                         confirmation_embed.set_footer(text="After confirming, this case will be reviewed by our quality assurance team.")
                         qa_view = ConfirmCancelView(self.bot, message, accused_id, reason, proof_links)
                         self.bot.add_view(qa_view)
-                        await message.channel.send(embed=confirmation_embed, view=qa_view)
+                        await message.reply(embed=confirmation_embed, view=qa_view)
                     else:
-                        await message.channel.send(
+                        await message.reply(
                             embed=nextcord.Embed(
                                 title="Invalid Case Format",
                                 description="**Please use the correct format:**\n```\nAccused Discord ID: 123456789\nReason: <reason>\nProof:\nhttps://example.com\nhttps://example.com\n```",
@@ -228,3 +245,4 @@ class CaseCreation(commands.Cog):
 
 def setup(bot):
     bot.add_cog(CaseCreation(bot))
+    
