@@ -37,17 +37,10 @@ def load_cogs():
             for filename in files:
                 if filename.endswith(".py"):
                     cog_path = folder_path.replace('./', '').replace(os.sep, '.')
-<<<<<<< HEAD
                     logger.warn(f'Loading cog: {filename}')
                     client.load_extension(f"{cog_path}.{filename[:-3]}")
                 else:
                     logger.error(f'Skipping file: {filename}')
-=======
-                    logger.output(f'Loading cog: {filename}')
-                    client.load_extension(f"{cog_path}.{filename[:-3]}")
-                else:
-                    logger.warn(f'Skipping file: {filename}')
->>>>>>> fd55e2ff2029f4448b24ec2002c951a57164b1bd
 
 
 @client.event
