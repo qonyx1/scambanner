@@ -17,7 +17,7 @@ from types import SimpleNamespace
 system_config = SystemConfig.system_config
 
 discord_cdn_domains = [
-    "cdn.discordapp.com", 
+    "cdn.discordapp.com",
     "media.discordapp.net",
     "images-ext-1.discordapp.net"
 ]
@@ -212,29 +212,43 @@ class CaseReviewView(View):
                 return
             response_json = create_request.json()
             if response_json is None or "case_data" not in response_json:
+                print(response_json)
                 await interaction.followup.send("Failed to create the case in the database.", ephemeral=True)
                 return
             case_data = response_json.get("case_data")
             case_id = case_data.get("case_id")
+            accused_obj = await self.bot.fetch_user(accused_id)
             confirmation_embed = build_case_embed(
                 self.responsible_guild,
-                accused_id,
+                accused_obj,
                 self.investigator,
                 datetime.datetime.now(),
                 self.reason,
                 self.proof_links
             )
+
             print(confirmation_embed)
             await main_log(self=self, embed=confirmation_embed)
             await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
+            try:
+                print(self.bot.guilds)
+                for guild in self.bot.guilds:
+                    print(guild.id)
+                    try:
+                        v = await guild.fetch_member(accused_id)
+                        await v.ban(reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}")
+                    except Exception as e:
+                        print(e)
+                        pass
+                logger.error("[CASE_CREATE] Failed to ban members across guilds")
+            except Exception as e:
+                print(e)
+                pass
             if not case_id:
                 await interaction.followup.send("Case creation failed. No case ID returned.", ephemeral=True)
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to submit the case: {e}")
             await interaction.followup.send("Failed to submit the case to the database.", ephemeral=True)
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            await interaction.followup.send("An unexpected error occurred while processing the case.", ephemeral=True)
 
     @nextcord.ui.button(label="Reject", style=nextcord.ButtonStyle.red, custom_id="reject_case")
     async def reject(self, button: Button, interaction: nextcord.Interaction):
