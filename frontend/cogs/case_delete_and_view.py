@@ -15,6 +15,15 @@ class Cases(commands.Cog):
     async def case(self, interaction):
         return
     
+    @staticmethod
+    async def main_log(self, embed: nextcord.Embed) -> bool:
+        try:
+            log_channel = int(system_config["discord"]["main_log_channel_id"])
+            log_channel = await self.bot.fetch_channel(log_channel)
+            await log_channel.send(embed=embed)
+            return True
+        except:
+            return False
 
     @case.subcommand(name="fetch", description="Fetch a case from the database.")
     async def user(self, interaction, case_id: str):
@@ -161,6 +170,7 @@ class Cases(commands.Cog):
             embed.set_footer(text=f"🆔: {case_id}")  
 
             await interaction.edit_original_message(embed=embed)
+            await self.main_log(self=self,embed=embed)
 
         else:
             await interaction.followup.send("*I couldn't fetch this case or delete it.*")

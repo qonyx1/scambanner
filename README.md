@@ -1,6 +1,8 @@
 # Recommendations
 To connect the API to a domain securely, use **Cloudflare Tunnels** to reverse-proxy whatever port to your domain. :)
 
+# Notes
+- While you can change the bot's name through the `system_config.toml`, please do not attempt to modify any names hardcoded into the code. It's there to communicate with `pm2` or similar.
 # Add your .env
 - `IMGBB_API_KEY = "dummy_imgbb_api_key"`
 - `VIDEO_API_SECRET = "dummy_video_api_secret"`

@@ -14,11 +14,6 @@ from utilities import Generate, SystemConfig
 system_config = SystemConfig.system_config
 database = Data.database
 
-discord_cdn_domains = [
-    "cdn.discordapp.com", 
-    "media.discordapp.net",
-    "images-ext-1.discordapp.net"
-]
 
 class case_id(BaseModel):
     case_id: str
@@ -69,6 +64,13 @@ async def create_case(request: CreateCase):
     updated_proof_links = []
     temp_dir = "temp_downloads"
     os.makedirs(temp_dir, exist_ok=True)
+
+    discord_cdn_domains = [
+        "cdn.discordapp.com", 
+        "media.discordapp.net",
+        "images-ext-1.discordapp.net"
+    ]
+
 
     if system_config["api"]["proof_proxy"]:
         for link in request.proof:

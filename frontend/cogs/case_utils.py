@@ -8,6 +8,7 @@ url = system_config["api"]["url"]
 from data import Data
 from utility import logger
 
+
 from nextcord.ext import commands
 from cogs.case_delete_and_view import Cases
 
@@ -19,6 +20,17 @@ class CaseUtils(commands.Cog):
     @nextcord.slash_command(name="servers")
     async def servers(self, interaction):
         return
+    
+    @staticmethod
+    async def main_log(self, embed: nextcord.Embed) -> bool:
+        try:
+            log_channel = int(system_config["discord"]["main_log_channel_id"])
+            log_channel = await self.bot.fetch_channel(log_channel)
+            await log_channel.send(embed=embed)
+            return True
+        except:
+            return False
+
     
 
     @servers.subcommand(name="fetch", description="Check if a server is whitelisted.")
@@ -34,8 +46,22 @@ class CaseUtils(commands.Cog):
                     color=nextcord.Color.green()
                 )
             )
+            await self.main_log(self=self,
+                embed=nextcord.Embed(
+                    title="Server Whitelisted",
+                    description=f"The server with ID `{guild_id}` is whitelisted. Logging channel ID: `{channel_id}`.",
+                    color=nextcord.Color.green()
+                )
+            )
         else:
             await interaction.response.send_message(
+                embed=nextcord.Embed(
+                    title="Server Not Whitelisted",
+                    description=f"The server with ID `{guild_id}` is not whitelisted.",
+                    color=nextcord.Color.red()
+                )
+            )
+            await self.main_log(self=self,
                 embed=nextcord.Embed(
                     title="Server Not Whitelisted",
                     description=f"The server with ID `{guild_id}` is not whitelisted.",
@@ -56,12 +82,24 @@ class CaseUtils(commands.Cog):
                 description="I couldn't find this server. Please try again.",
                 color=nextcord.Color.red()
             ))
+            await self.main_log(embed=nextcord.Embed(self=self,
+                title="Invalid server/channel",
+                description="I couldn't find this server. Please try again.",
+                color=nextcord.Color.red()
+            ))
             return
         
         Data.database["bot"]["whitelists"].insert_one(
             {guild_id:channel_id}
         )
 
+        await self.main_log(self=self,
+            embed=nextcord.Embed(
+                title="Server Whitelisted",
+                description=f"{channel.jump_url} has been whitelisted, and the logging channel was set to {channel.mention}. Remember to use the format.",
+                color=nextcord.Color.green()
+            )
+        )
         await interaction.response.send_message(
             embed=nextcord.Embed(
                 title="Server Whitelisted",
@@ -81,6 +119,12 @@ class CaseUtils(commands.Cog):
         try:
             guild = await self.bot.fetch_guild(guild_id)
         except:
+            await self.main_log(self=self,embed=
+nextcord.Embed(
+    title="Invalid server",
+    description="I couldn't find this server. Please try again.",
+    color=nextcord.Color.red()
+))
             await interaction.response.send_message(embed=nextcord.Embed(
                 title="Invalid server",
                 description="I couldn't find this server. Please try again.",
@@ -90,13 +134,20 @@ class CaseUtils(commands.Cog):
         
         Data.database["bot"]["whitelists"].delete_one({guild_id: {"$exists": True}})
 
-        await interaction.response.send_message(
-            embed=nextcord.Embed(
-                title="Server Removed",
-                description=f"{guild.name} has been unwhitelisted, and I will no longer listen for new cases from this server.",
-                color=nextcord.Color.green()
-            )
+        n=nextcord.Embed(
+            title="Server Removed",
+            description=f"**{guild.name}** ({guild.id}) has been unwhitelisted, and I will no longer listen for new cases from this server.",
+            color=nextcord.Color.green()
         )
+        await interaction.response.send_message(
+            embed=n
+        )
+
+        await self.main_log(
+            self=self,
+            embed=n
+        )
+
 
 
 
