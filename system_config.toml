@@ -1,16 +1,22 @@
 # Discord Configuration
+
 [discord]
-main_guild_id = 1355417699634778133  # Set this to the main guild
-main_channel_id = 1355605890472083688  # All cases made by servers will be sent to this channel for manual review ("Quality Assurance").
-                                       # It's assumed the people making cases are not the same people who will be reviewing them.
-main_log_channel_id = 1355614903037198386
-bot_name = "Scammerban"  # What the bot refers to itself as (if speaking in 1st person for some reason)
+main_guild_id = 1355417699634778133            # Set this to the main guild
+
+main_channel_id = 1355605890472083688          # All cases made by servers will be sent to this channel for manual review ("Quality Assurance").
+                                               # It's assumed the people making cases are not the same people who will be reviewing them.
+
+main_log_channel_id = 1355614903037198386      # The channel that all new cases/deleted cases get logged to          
+
+admin_team_role_id = 1356122401334755499         # The role id required in the main guild to delete cases
+bot_name = "Scammerban"                        # What the bot refers to itself as (if speaking in 1st person for some reason)
 
 
 # --------------->
 
 
 # API Configuration
+
 [api]
 master_password = "master_password_for_the_api"  # Lets the API distinguish between a random person and the Discord bot
 mongodb_db_name = "database"
@@ -26,5 +32,5 @@ port = 8000  # Same port used in the URL
 
 # General Settings
 [general]
-debug_mode = false
+debug_mode = true
 version = "1.0.0"

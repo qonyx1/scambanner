@@ -191,6 +191,12 @@ class CaseReviewView(View):
 
     @nextcord.ui.button(label="Approve", style=nextcord.ButtonStyle.green, custom_id="approve_case")
     async def approve(self, button: Button, interaction: nextcord.Interaction):
+        try:
+            role = await interaction.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
+            if role not in interaction.user.roles:
+                return await interaction.response.send_message("*You need to be have the configured administrator role to use this!*")
+        except:
+            return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
         await self.disable_buttons_and_update_embed(interaction, "approve")
         await interaction.response.defer()
         accused_id = int(self.accused_id)
@@ -212,7 +218,7 @@ class CaseReviewView(View):
                 return
             response_json = create_request.json()
             if response_json is None or "case_data" not in response_json:
-                print(response_json)
+                # print(response_json)
                 await interaction.followup.send("Failed to create the case in the database.", ephemeral=True)
                 return
             case_data = response_json.get("case_data")
@@ -227,13 +233,13 @@ class CaseReviewView(View):
                 self.proof_links
             )
 
-            print(confirmation_embed)
+            # print(confirmation_embed)
             await main_log(self=self, embed=confirmation_embed)
             await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
             try:
                 print(self.bot.guilds)
                 for guild in self.bot.guilds:
-                    print(guild.id)
+                    # print(guild.id)
                     try:
                         v = await guild.fetch_member(accused_id)
                         await v.ban(reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}")
@@ -242,7 +248,7 @@ class CaseReviewView(View):
                         pass
                 logger.error("[CASE_CREATE] Failed to ban members across guilds")
             except Exception as e:
-                print(e)
+                # print(e)
                 pass
             if not case_id:
                 await interaction.followup.send("Case creation failed. No case ID returned.", ephemeral=True)
@@ -252,6 +258,12 @@ class CaseReviewView(View):
 
     @nextcord.ui.button(label="Reject", style=nextcord.ButtonStyle.red, custom_id="reject_case")
     async def reject(self, button: Button, interaction: nextcord.Interaction):
+        try:
+            role = await interaction.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
+            if role not in interaction.user.roles:
+                return await interaction.response.send_message("*You need to be have the configured administrator role to use this!*")
+        except:
+            return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
         await interaction.response.send_message("Case rejected.", ephemeral=True)
         await self.disable_buttons_and_update_embed(interaction, "reject")
 
@@ -296,12 +308,33 @@ class CaseCreation(commands.Cog):
                                         "accused_member": int(accused_id)
                                     }
                                 )
-                            print(req.content)
-                            print(req.json)
-                            print(req.json().get("code"))
                             if req.json().get("code") == 0:
-                                return await message.reply(embed=nextcord.Embed(title="User already has a case", description="This user already has an active case against them.", color=nextcord.Color.red()))
-                        except:
+                                caid = req.json().get("case_id")
+                                x_embed = nextcord.Embed(
+                                    title="User already has a case",
+                                    description="Please delete this case from the database before making a new one.",
+                                    color=nextcord.Color.red()
+                                )
+                                x_embed.add_field(name="Case ID", value=str(caid))
+
+                                try:
+                                    tmp = requests.post(
+                                        url=f"http://127.0.0.1:{system_config['api']['port']}/cases/fetch_case",
+                                        json = {
+                                                "case_id": caid
+                                            }
+                                    )
+                                    if tmp.json().get("case_data"):
+                                        x_embed.add_field(name="Investigator",value=f"<@{tmp.json().get("case_data")["investigator"]}>")
+                                        x_embed.add_field(name="Time",value=f"<t:{tmp.json().get("case_data")["created_at"]}>")
+                                        x_embed.add_field(name="Reason",value=tmp.json().get("case_data")["reason"])
+                                except:
+                                    pass
+
+                                await message.reply(embed=x_embed)
+                                return
+                        except Exception as e:
+                            logger.error(e, debug=True)
                             pass
                         if investigator_id:
                             if int(investigator_id) != message.author.id:
