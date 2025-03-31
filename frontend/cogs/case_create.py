@@ -288,6 +288,21 @@ class CaseCreation(commands.Cog):
                         proof_links = [link.strip() for link in match.group(4).split("\n") if link.strip()]
                         if not accused_id or not reason or not proof_links:
                             return
+
+                        try:
+                            req = requests.post(
+                                url=f"http://127.0.0.1:{system_config['api']['port']}/checks/check_id",
+                                json = {
+                                        "accused_member": int(accused_id)
+                                    }
+                                )
+                            print(req.content)
+                            print(req.json)
+                            print(req.json().get("code"))
+                            if req.json().get("code") == 0:
+                                return await message.reply(embed=nextcord.Embed(title="User already has a case", description="This user already has an active case against them.", color=nextcord.Color.red()))
+                        except:
+                            pass
                         if investigator_id:
                             if int(investigator_id) != message.author.id:
                                 try:

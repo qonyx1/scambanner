@@ -37,7 +37,7 @@ class Users(commands.Cog):
                 await interaction.response.defer()
 
                 case_request = requests.post(
-                    url = f"http://{system_config["api"]["port"]}/cases/fetch_case",
+                        url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
                     json = {
                         "case_id": request.get("case_id")
                     }
