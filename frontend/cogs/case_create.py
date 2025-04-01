@@ -1,3 +1,13 @@
+"""
+Contains FRONTEND (Bot) code for case creation command(s).
+
+Layout:
+    - User from a whitelisted server/channel submits a case
+    - Case template is sent to Quality Assurance team
+    - Case template is reviewed and Approved or Denied
+    - If approved, the case wil be submitted and sent over the backend (API)
+"""
+
 import re
 import nextcord, requests
 from nextcord.ext import commands
