@@ -11,3 +11,5 @@ aiohttp
 aiofiles
 cloudinary
 pystyle
+matplotlib
+seaborn

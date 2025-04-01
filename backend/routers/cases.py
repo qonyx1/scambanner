@@ -18,16 +18,23 @@ database = Data.database
 class case_id(BaseModel):
     case_id: str
 
+class FetchCase(BaseModel):
+    master_password: str
+    case_id: str
+
 class CreateCase(BaseModel):
-    master_password: str = Field(min_length=12, max_length=999999999999999)
+    master_password: str
     server_id: int
     accused_member: int
     investigator_member: int
     reason: str
     proof: List[str] = []
 
+class DumpCases(BaseModel):
+    master_password: str        # If authentication for dumping is disabled anything passed here will be accepted
+
 class DeleteCase(BaseModel):
-    master_password: str = Field(min_length=12, max_length=999999999999999)
+    master_password: str
     case_id: str
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -137,13 +144,44 @@ async def delete_case(request: DeleteCase):
         return {"code": 1, "body": "A database error has occurred while deleting the case."}
 
 @router.post("/fetch_case")
-async def fetch_case(request: case_id):
+async def fetch_case(request: FetchCase):
+    if system_config["api"].get("case_fetch_password_needed", False):
+        if request.master_password != system_config["api"]["master_password"]:
+            return {"code": 1, "body": "You are not authorized to run this action."}
     try:
         case = database["cases"].find_one({"_id": request.case_id})
         if not case:
             logger.warn("Received request from /fetch_case, case doesn't exist", debug=True)
             return {"code": 1, "body": "This case does not exist.", "found": False}
+        
+        case["_id"] = str(case["_id"])
+        if system_config["api"].get("case_fetch_hide_investigator", False):
+            if request.master_password != system_config["api"]["master_password"]:
+                case.pop("investigator", None)
+        
         return {"code": 0, "body": "This case exists, view the data.", "found": True, "case_data": case}
     except Exception as f:
         logger.error(f"[FETCH_CASE] {f}")
         return {"code": 1, "found": False, "body": "A database error has occurred while finding a case."}
+
+@router.post("/dump")
+async def dump(request: DumpCases):
+    if system_config["api"]["case_dump_password_needed"] != False:
+        if request.master_password != system_config["api"]["master_password"]:
+            return {"code": 1, "body": "You are not authorized to run this action."}
+    try:
+        cases_cursor = database["cases"].find()
+        cases = []
+        for case in cases_cursor:
+            case["_id"] = str(case["_id"])
+
+            if system_config["api"]["case_dump_hide_investigator"]:
+                if request.master_password != system_config["api"]["master_password"]:
+                    case.pop("investigator", None)
+
+            cases.append(case)
+        
+        return {"code": 0, "body": "All cases retrieved.", "cases": cases}
+    except Exception as e:
+        logger.error(f"[DUMP_CASES] {e}")
+        raise {"code": 1, "body": "An error occured while accessing the database."}
