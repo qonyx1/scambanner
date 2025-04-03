@@ -18,18 +18,18 @@ class Users(commands.Cog):
         return
     
 
-    # TODO: Make http://ip:port sync with settings
     @cases.subcommand(name="user", description="Evaluate if someone is registered in the database.")
     async def user(self, interaction, user: nextcord.User):
         logger.output(int(str(user.id).strip("<@!>")))
         request = requests.post(
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/checks/check_id",
             json = {
+                "master_password": system_config["api"]["master_password"],
                 "accused_member": int(str(user.id).strip("<@!>"))
             }
         )
 
-        logger.output(request)
+        logger.ok(request)
 
         if request.status_code == 200:
             request = request.json()
@@ -39,6 +39,7 @@ class Users(commands.Cog):
                 case_request = requests.post(
                         url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
                     json = {
+                        "master_password": system_config["api"]["master_password"], 
                         "case_id": request.get("case_id")
                     }
                 )
@@ -92,7 +93,8 @@ class Users(commands.Cog):
                     await interaction.edit_original_message(embed=embed)
 
                 else:
-                    await interaction.edit_original_message("*This member has an active case against them, but we couldn't find the details.*")
+                    logger.error(f"[USER] {case_request.json()} - {case_request.status_code}",debug=True)
+                    await interaction.edit_original_message(content="*This member has an active case against them, but we couldn't find the details.*")
             else:
                 await interaction.response.send_message("*This member has no active cases against them.*")
             

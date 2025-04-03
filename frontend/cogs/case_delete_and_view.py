@@ -5,6 +5,7 @@ from utilities import SystemConfig
 system_config = SystemConfig.system_config
 url = system_config["api"]["url"]
 
+from utility import logger
 from nextcord.ext import commands
 
 class Cases(commands.Cog):
@@ -33,6 +34,7 @@ class Cases(commands.Cog):
         case_request = requests.post(
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
             json = {
+                "master_password": system_config["api"]["master_password"],
                 "case_id": case_id
             }
         )
@@ -86,6 +88,7 @@ class Cases(commands.Cog):
             await interaction.edit_original_message(embed=embed)
 
         else:
+            logger.error(f"[CASE_FETCH] {case_request.json()} - {case_request.status_code}")
             await interaction.followup.send("*This case does not exist within our records.*")
 
 

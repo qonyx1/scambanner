@@ -277,6 +277,19 @@ class CaseReviewView(View):
         await interaction.response.send_message("Case rejected.", ephemeral=True)
         await self.disable_buttons_and_update_embed(interaction, "reject")
 
+        try:
+            auth = await self.bot.fetch_user(int(self.investigator))
+            emb = nextcord.Embed(
+                    title="Your case was denied",
+                    description="A user on the Quality Assurance team has denied your case submission.",
+                    color=nextcord.Color.red()
+            )
+            emb.add_field(name="Accused ID", value=str(self.accused_id))    
+            emb.add_field(name="Reason", value=str(self.reason))
+        except Exception as e:
+            logger.error(f"[CASE_CREATION_COG] {e}")
+            pass
+
 class CaseCreation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
