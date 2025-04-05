@@ -10,7 +10,7 @@ from utility import logger
 
 
 from nextcord.ext import commands
-from cogs.case_delete_and_view import Cases
+from cogs.cases.case_delete_and_view import Cases
 
 class CaseUtils(commands.Cog):
     def __init__(self, bot):

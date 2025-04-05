@@ -5,9 +5,9 @@ import os
 from utility import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
-
 load_dotenv()
 client = commands.Bot(intents=nextcord.Intents.all())
+
 text = rf"""
 
                           _                                 
