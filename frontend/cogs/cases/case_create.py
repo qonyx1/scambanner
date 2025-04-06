@@ -274,6 +274,30 @@ class CaseReviewView(View):
         modal = RejectCaseModal(self.investigator, self.accused_id, self)
         await interaction.response.send_modal(modal)
 
+class RejectDetailsView(nextcord.ui.View):
+    def __init__(self, accused_id, investigator, reason, proof_links):
+        super().__init__(timeout=None)
+        self.accused_id = accused_id
+        self.investigator = investigator
+        self.reason = reason
+        self.proof_links = proof_links
+
+    @nextcord.ui.button(label="What was this?", style=nextcord.ButtonStyle.secondary, custom_id="details_button")
+    async def what_was_this(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        details_embed = nextcord.Embed(
+            title="📜 Case Rejection Details",
+            color=nextcord.Color.red()
+        )
+        details_embed.add_field(name="🧑‍⚖️ Accused ID", value=str(self.accused_id), inline=False)
+        if hasattr(self.investigator, "id"):
+            investigator_id = self.investigator.id
+        else:
+            investigator_id = self.investigator
+        details_embed.add_field(name="🔍 Investigator ID", value=str(investigator_id), inline=False)
+        details_embed.add_field(name="📌 Reason", value=self.reason, inline=False)
+        if self.proof_links:
+            details_embed.add_field(name="🖼 Proof", value="\n".join(self.proof_links), inline=False)
+        await interaction.response.send_message(embed=details_embed, ephemeral=True)
 
 class RejectCaseModal(nextcord.ui.Modal):
     def __init__(self, investigator, accused_id, review_view: CaseReviewView):
@@ -281,7 +305,12 @@ class RejectCaseModal(nextcord.ui.Modal):
         self.investigator = investigator
         self.accused_id = accused_id
         self.review_view = review_view
-        self.reason = nextcord.ui.TextInput(label="Reason for rejection", style=nextcord.TextInputStyle.paragraph, placeholder="Provide a reason for rejecting the case.", required=True)
+        self.reason = nextcord.ui.TextInput(
+            label="Reason for rejection", 
+            style=nextcord.TextInputStyle.paragraph, 
+            placeholder="Provide a reason for rejecting the case.", 
+            required=True
+        )
         self.add_item(self.reason)
 
     async def callback(self, interaction: nextcord.Interaction):
@@ -290,13 +319,32 @@ class RejectCaseModal(nextcord.ui.Modal):
         await interaction.response.defer()
         self.review_view.embed.add_field(name="⛔ Rejection Reason", value=reason, inline=False)
         
-        # TODO: DM the original investigator with the rejection reason
-        # try:
-        #     await 
-        # except:
-        #     pass
         await interaction.message.edit(embed=self.review_view.embed, view=None)
-        logger.ok(f"Case rejected for accused {self.accused_id} by investigator {self.investigator}. Reason: {reason}")
+        
+        try:
+            if hasattr(self.investigator, "id"):
+                investigator_id = self.investigator.id
+            else:
+                investigator_id = int(self.investigator)
+            inves = await self.review_view.bot.fetch_user(investigator_id)
+            dm_embed = nextcord.Embed(
+                title="⛔ Your case was rejected",
+                description="A user on the Quality Assurance team has denied your case submission.",
+                color=nextcord.Color.red()
+            )
+            dm_embed.add_field(name="🧑‍⚖️ Accused ID", value=str(self.accused_id), inline=True)
+            dm_embed.add_field(name="📌 Reason", value=reason, inline=True)
+            details_view = RejectDetailsView(
+                accused_id=self.accused_id,
+                investigator=self.investigator,
+                reason=reason,
+                proof_links=self.review_view.proof_links
+            )
+            await inves.send(embed=dm_embed, view=details_view)
+        except Exception as e:
+            logger.error(f"Failed to DM the investigator: {e}")
+        
+        logger.ok(f"Case rejected for accused {self.accused_id} by investigator {self.investigator}. Reason: {reason}", debug=True)
 
 class CaseCreation(commands.Cog):
     def __init__(self, bot):
