@@ -175,6 +175,9 @@ class ConfirmCancelView(View):
             sent_message = await queue_channel.send(embed=case_embed, view=review_view)
             review_view.message = sent_message
 
+
+
+
 class CaseReviewView(View):
     def __init__(self, bot, embed, accused_id, reason, proof_links, responsible_guild, investigator):
         super().__init__(timeout=None)
@@ -228,7 +231,6 @@ class CaseReviewView(View):
                 return
             response_json = create_request.json()
             if response_json is None or "case_data" not in response_json:
-                # print(response_json)
                 await interaction.followup.send("Failed to create the case in the database.", ephemeral=True)
                 return
             case_data = response_json.get("case_data")
@@ -243,23 +245,16 @@ class CaseReviewView(View):
                 self.reason,
                 self.proof_links
             )
-
-            # print(confirmation_embed)
             await main_log(self=self, embed=confirmation_embed)
             await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
             try:
-                print(self.bot.guilds)
                 for guild in self.bot.guilds:
-                    # print(guild.id)
                     try:
                         v = await guild.fetch_member(accused_id)
                         await v.ban(reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}")
-                    except Exception as e:
-                        print(e)
+                    except Exception:
                         pass
-                logger.error("[CASE_CREATE] Failed to ban members across guilds")
             except Exception as e:
-                # print(e)
                 pass
             if not case_id:
                 await interaction.followup.send("Case creation failed. No case ID returned.", ephemeral=True)
@@ -272,24 +267,36 @@ class CaseReviewView(View):
         try:
             role = await interaction.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
             if role not in interaction.user.roles:
-                return await interaction.response.send_message("*You need to be have the configured administrator role to use this!*")
+                return await interaction.response.send_message("*You need to have the configured administrator role to use this!*")
         except:
             return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
-        await interaction.response.send_message("Case rejected.", ephemeral=True)
-        await self.disable_buttons_and_update_embed(interaction, "reject")
+        
+        modal = RejectCaseModal(self.investigator, self.accused_id, self)
+        await interaction.response.send_modal(modal)
 
-        try:
-            auth = await self.bot.fetch_user(int(self.investigator))
-            emb = nextcord.Embed(
-                    title="Your case was denied",
-                    description="A user on the Quality Assurance team has denied your case submission.",
-                    color=nextcord.Color.red()
-            )
-            emb.add_field(name="Accused ID", value=str(self.accused_id))    
-            emb.add_field(name="Reason", value=str(self.reason))
-        except Exception as e:
-            logger.error(f"[CASE_CREATION_COG] {e}")
-            pass
+
+class RejectCaseModal(nextcord.ui.Modal):
+    def __init__(self, investigator, accused_id, review_view: CaseReviewView):
+        super().__init__(title="Reject Case", custom_id="reject_case_modal")
+        self.investigator = investigator
+        self.accused_id = accused_id
+        self.review_view = review_view
+        self.reason = nextcord.ui.TextInput(label="Reason for rejection", style=nextcord.TextInputStyle.paragraph, placeholder="Provide a reason for rejecting the case.", required=True)
+        self.add_item(self.reason)
+
+    async def callback(self, interaction: nextcord.Interaction):
+        reason = self.reason.value
+        await self.review_view.disable_buttons_and_update_embed(interaction, "reject")
+        await interaction.response.defer()
+        self.review_view.embed.add_field(name="⛔ Rejection Reason", value=reason, inline=False)
+        
+        # TODO: DM the original investigator with the rejection reason
+        # try:
+        #     await 
+        # except:
+        #     pass
+        await interaction.message.edit(embed=self.review_view.embed, view=None)
+        logger.ok(f"Case rejected for accused {self.accused_id} by investigator {self.investigator}. Reason: {reason}")
 
 class CaseCreation(commands.Cog):
     def __init__(self, bot):

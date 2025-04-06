@@ -23,7 +23,8 @@ def requires_owner() -> None:
         async def wrapper(self, interaction: Interaction, *args, **kwargs):
             member: Member = interaction.user
             if member.id in SystemConfig.system_config.get("discord", {}).get("additional_owners", []):
-                return await func(self, interaction, *args, **kwargs)
+                await func(self, interaction, *args, **kwargs)
+                return
             else:
                 await interaction.response.send_message(
                     "*You do not have permission to use this command.*",
@@ -33,7 +34,8 @@ def requires_owner() -> None:
         return wrapper
     return decorator
 
-def build_case_embed(responsible_guild: nextcord.Guild, accused: nextcord.User, investigator: nextcord.User, created_at: str, reason: str, proof_links: list):
+@typechecked
+def build_case_embed(responsible_guild: nextcord.Guild, accused: nextcord.User, investigator: nextcord.User, created_at: str, reason: str, proof_links: list) -> nextcord.Embed:
     embed = nextcord.Embed(
         title=f"📜 Case from {responsible_guild.name} ({responsible_guild.id})",
         color=nextcord.Color.red()
