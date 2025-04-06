@@ -12,7 +12,7 @@ import re
 import nextcord, requests
 from nextcord.ext import commands
 from nextcord.ui import View, Button
-from utilities import SystemConfig
+from utilities import SystemConfig, send_case_logs
 from utility import logger
 from data import Data
 import asyncio
@@ -69,7 +69,7 @@ async def proxy_proof_links(proof_links):
                     finally:
                         os.remove(downloaded_file)
                 else:
-                    logger.error(f"Failed to download proof file: {link}")
+                    logger.error(f"[UPLOAD_ERROR] Failed to download proof file: {link}")
             else:
                 updated_proof_links.append(link)
         return updated_proof_links
@@ -233,6 +233,7 @@ class CaseReviewView(View):
                 return
             case_data = response_json.get("case_data")
             case_id = case_data.get("case_id")
+            await send_case_logs(self, case_id)
             accused_obj = await self.bot.fetch_user(accused_id)
             confirmation_embed = build_case_embed(
                 self.responsible_guild,
