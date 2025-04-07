@@ -55,9 +55,7 @@ class Help(commands.Cog):
             uptime_timestamp = int(current_time - uptime_seconds)
             discord_timestamp = f"<t:{uptime_timestamp}:R>"
 
-            """
-            Stores the command list here
-            """
+            # Stores the command list here
             command_list = ""
             for command in self.bot.get_application_commands():
                 try:
