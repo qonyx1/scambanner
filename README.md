@@ -16,12 +16,18 @@ To connect the API to a domain securely, use **Cloudflare Tunnels** to reverse-p
 - `pip install -r requirements.txt`
 
 # Run
-- `pm2 start ./backend/main.py --namespace your_bot`
-- `pm2 start ./frontend/main.py --namespace your_bot`
+```
+cd ./backend
+pm2 start ./backend/main.py --name backend --namespace scambanner
+```
+```
+cd ./frontend
+pm2 start ./frontend/main.py --name frontend --namespace scambanner
+```
 
 # Maintain
-- `pm2 logs your_bot`
-- `pm2 restart your_bot`
+- `pm2 logs scambanner`
+- `pm2 restart scambanner`
 
 # Access
 -  `https://ip:port/docs`

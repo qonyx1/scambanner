@@ -14,3 +14,4 @@ pystyle
 matplotlib
 seaborn
 typeguard
+psutil
