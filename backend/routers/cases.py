@@ -41,6 +41,11 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 
 async def download_file(url: str, dest: str):
     try:
+        parsed_url = urlparse(url)
+        if parsed_url.netloc not in discord_cdn_domains:
+            logger.error(f"URL {url} is not in the list of allowed domains.")
+            return None
+        
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
@@ -72,11 +77,11 @@ async def create_case(request: CreateCase):
     temp_dir = "temp_downloads"
     os.makedirs(temp_dir, exist_ok=True)
 
-    discord_cdn_domains = [
-        "cdn.discordapp.com", 
-        "media.discordapp.net",
-        "images-ext-1.discordapp.net"
-    ]
+discord_cdn_domains = [
+    "cdn.discordapp.com", 
+    "media.discordapp.net",
+    "images-ext-1.discordapp.net"
+]
 
 
     if system_config["api"]["proof_proxy"]:
