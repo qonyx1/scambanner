@@ -2,6 +2,7 @@ import nextcord
 from nextcord.ext import commands
 from dotenv import load_dotenv
 import os
+import logging
 from utility import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
@@ -46,4 +47,5 @@ async def on_ready():
 
 if __name__ == "__main__":
     load_cogs()
+    logging.getLogger("nextcord").setLevel(logging.CRITICAL + 9) # remove all nextcord logging, set to ERROR if wanted
     client.run(os.getenv("TOKEN"))
