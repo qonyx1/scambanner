@@ -9,7 +9,7 @@ system_config = SystemConfig.system_config
 
 app = FastAPI(
     title=system_config["discord"]["bot_name"] or "Scambanner",
-    description=f"{system_config["discord"]["bot_name"] or "Scambanner"} is an open-source project that lets you crossban scammers."
+    description=f"{system_config['discord']['bot_name'] or 'Scambanner'} is an open-source project..."
 )
 
 app.include_router(cases.router)
