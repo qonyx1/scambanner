@@ -3,7 +3,7 @@ import aiofiles
 import os
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from data import Data
 from urllib.parse import urlparse
 import logger
@@ -21,6 +21,7 @@ class case_id(BaseModel):
 class FetchCase(BaseModel):
     master_password: str
     case_id: str
+    api_key: Optional[str] = None
 
 class CreateCase(BaseModel):
     master_password: str
@@ -29,15 +30,34 @@ class CreateCase(BaseModel):
     investigator_member: int
     reason: str
     proof: List[str] = []
+    api_key: Optional[str] = None
 
 class DumpCases(BaseModel):
-    master_password: str        # If authentication for dumping is disabled anything passed here will be accepted
+    master_password: str
+    api_key: Optional[str] = None
 
 class DeleteCase(BaseModel):
     master_password: str
     case_id: str
 
+discord_cdn_domains = [
+    "cdn.discordapp.com", 
+    "media.discordapp.net",
+    "images-ext-1.discordapp.net"
+]
+
 router = APIRouter(prefix="/cases", tags=["cases"])
+
+def authorize_action(master_password: str, api_key: Optional[str], action: str) -> bool:
+    if master_password == system_config["api"]["master_password"]:
+        return True
+
+    if api_key:
+        key_info = database["keys"].find_one({"key": api_key})
+        if key_info and key_info.get(action, False):
+            return True
+
+    return False
 
 async def download_file(url: str, dest: str):
     try:
@@ -60,7 +80,7 @@ async def download_file(url: str, dest: str):
 
 @router.post("/create_case")
 async def create_case(request: CreateCase):
-    if request.master_password != system_config["api"]["master_password"]:
+    if not authorize_action(request.master_password, request.api_key, "create_case"):
         return {"code": 1, "body": "You are not authorized to run this action."}
     
     try: # users cant have duplicate cases
@@ -76,12 +96,6 @@ async def create_case(request: CreateCase):
     updated_proof_links = []
     temp_dir = "temp_downloads"
     os.makedirs(temp_dir, exist_ok=True)
-
-discord_cdn_domains = [
-    "cdn.discordapp.com", 
-    "media.discordapp.net",
-    "images-ext-1.discordapp.net"
-]
 
 
     if system_config["api"]["proof_proxy"]:
@@ -134,8 +148,9 @@ discord_cdn_domains = [
 
 @router.post("/delete_case")
 async def delete_case(request: DeleteCase):
-    if request.master_password != system_config["api"]["master_password"]:
-        return {"code": 1, "body": "You are not authorized to run this action."}
+    if system_config["api"].get("case_fetch_password_needed", False):
+        if not authorize_action(request.master_password, request.api_key, "delete_case"):
+            return {"code": 1, "body": "You are not authorized to run this action."}
     
     try:
         result = database["cases"].delete_one({"_id": request.case_id})
@@ -151,7 +166,7 @@ async def delete_case(request: DeleteCase):
 @router.post("/fetch_case")
 async def fetch_case(request: FetchCase):
     if system_config["api"].get("case_fetch_password_needed", False):
-        if request.master_password != system_config["api"]["master_password"]:
+        if not authorize_action(request.master_password, request.api_key, "fetch_case"):
             return {"code": 1, "body": "You are not authorized to run this action."}
     try:
         case = database["cases"].find_one({"_id": request.case_id})

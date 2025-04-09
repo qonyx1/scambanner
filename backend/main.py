@@ -8,7 +8,7 @@ import sys
 system_config = SystemConfig.system_config
 
 app = FastAPI(
-    title=system_config["discord"]["bot_name"] or "Scambanner",
+    title=system_config['discord']['bot_name'] or 'Scambanner',
     description=f"{system_config['discord']['bot_name'] or 'Scambanner'} is an open-source project..."
 )
 
@@ -19,13 +19,13 @@ app.include_router(checks.router)
 async def root():
     return {
         "code": 0,
-        "body": f"{system_config["discord"]["bot_name"] or "Scambanner"} API is running."
+        "body": f"{system_config['discord']['bot_name'] or 'Scambanner'} API is running."
     }
 
 if __name__ == "__main__":     # Main starter
 
     logger.warn("Checking configuration", debug=True)
-    if "https://" not in system_config["api"]["url"]:
+    if "https://" not in system_config['api']['url']:
         exit(logger.error("Invalid URL provided in configuration."))
 
     if system_config["api"]["port"] < 1024 and os.geteuid() != 0:
