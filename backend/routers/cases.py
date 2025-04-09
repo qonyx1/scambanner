@@ -40,11 +40,11 @@ class DeleteCase(BaseModel):
     master_password: str
     case_id: str
 
-discord_cdn_domains = [
-    "cdn.discordapp.com", 
-    "media.discordapp.net",
-    "images-ext-1.discordapp.net"
-]
+allowed_paths = {
+    "cdn.discordapp.com": "/attachments/",
+    "media.discordapp.net": "/attachments/",
+    "images-ext-1.discordapp.net": "/external/"
+}
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -59,13 +59,13 @@ def authorize_action(master_password: str, api_key: Optional[str], action: str) 
 
     return False
 
-async def download_file(url: str, dest: str):
+async def download_file(domain: str, path: str, dest: str):
     try:
-        parsed_url = urlparse(url)
-        if parsed_url.netloc not in discord_cdn_domains:
-            logger.error(f"URL {url} is not in the list of allowed domains.")
+        if domain not in allowed_paths or not path.startswith(allowed_paths[domain]):
+            logger.error(f"Invalid domain or path: {domain}{path}")
             return None
         
+        url = f"https://{domain}{path}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status == 200:
@@ -104,7 +104,8 @@ async def create_case(request: CreateCase):
                 filename = os.path.basename(urlparse(link).path)
                 filepath = os.path.join(temp_dir, filename)
 
-                downloaded_file = await download_file(link, filepath)
+                parsed_link = urlparse(link)
+                downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
                 if downloaded_file:
                     try:
                         if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
