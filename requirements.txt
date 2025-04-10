@@ -15,3 +15,5 @@ matplotlib
 seaborn
 typeguard
 psutil
+generateApiKey
+slowapi

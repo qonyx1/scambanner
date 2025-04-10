@@ -1,19 +1,41 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 from routers import cases, checks
 import logger
 from utilities import SystemConfig
+from datetime import timedelta, datetime
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
 import sys
-system_config = SystemConfig.system_config
 
+system_config = SystemConfig.system_config
 app = FastAPI(
     title=system_config['discord']['bot_name'] or 'Scambanner',
     description=f"{system_config['discord']['bot_name'] or 'Scambanner'} is an open-source project..."
 )
 
+from limiter import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.include_router(cases.router)
 app.include_router(checks.router)
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_exception_handler(request, exc: RateLimitExceeded):
+    retry_after = datetime.utcnow() + timedelta(minutes=1)
+    return JSONResponse(
+        status_code=429,
+        content={
+            "message": "You have exceeded the rate limit. Please try again later.",
+            "code": 1,
+            "retry_after": retry_after.isoformat()
+        },
+        headers={"Retry-After": "60"}
+    )
 
 @app.get(path="/")
 async def root():

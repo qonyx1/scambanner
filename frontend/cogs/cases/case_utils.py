@@ -5,7 +5,6 @@ import json
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
 url = system_config["api"]["url"]
-from data import Data
 from utility import logger
 
 
