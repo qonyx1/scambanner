@@ -1,36 +1,60 @@
-# Recommendations
-To connect the API to a domain securely, use **Cloudflare Tunnels** to reverse-proxy whatever port to your domain. :)
 
-# Notes
-- While you can change the bot's name through the `system_config.toml`, please do not attempt to modify any names hardcoded into the code. It's there to communicate with `pm2` or similar.
-- Docker support is experimental and not tested at all. Please stick to the `update_and_run.sh` (or manual pm2 commands) for the best result.
-- You must create a `.env` file. You must edit `system_config.toml`, if you don't, some parts will automatically exit.
+# Scambanner
+FastAPI (B) & Nextcord (F) project that lets you create a database of known scammers and take action using it.
+## Features
 
-# Add your .env
+- MongoDB Database (Local, modify to change)
+- Multi-party system (Quality assurance, trusted guilds)
+- Granular API Key & Generation/Revoking from bot
+- Security & Privacy measures
+- External media upload capability
+- Ticket system (tbd)
+
+
+## Important
+
+- By default, both systems will assume that you are running a local MongoDB instance with no authentication (please don't port forward...), in order to modify the entire database logic, you should access the `data.py` files in both `frontend` and `backend`. You must change these to use an external database (`mongodb://database.com:27071`).
+
+- This project has a two-party system, meaning that once a trusted/whitelisted guild member fills out a template, and clicks confirm, their case will be sent to another party -- the main guild (Quality Assurance), where you can then confirm it yourself and submit it to the backend.
+
+- This is a hobby project and may not be suitable for production environments. It should be though.
+## Deployment
+
+The project contains two different parts, the frontend (Nextcord) and backend (FastAPI). In order to start these two at the same time, and maintain their uptime, you can use [PM2](https://pm2.keymetrics.io/) or use our **experimental Docker container**. 
+
+
+### Create a virtual environment
+**Linux**
+```bash
+python -m venv ./.venv
+source ./.venv/bin/activate
+pip install -r ./requirements.txt
+```
+**Windows (PowerShell)**
+```bash
+python -m venv .\.venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Start both programs
+**Linux**
+```bash
+cd ./backend/
+pm2 start main.py --name backend --namespace sb
+cd ..
+cd ./frontend/
+pm2 start main.py --name frontend --namespace sb
+```
+**Windows (PowerShell)**
+Same thing, you might be required to change the signs to backslashes.
+
+## Environment Variables
+
+To run this project, you will need to add the following environment variables to your .env file
+
 - `IMGBB_API_KEY = "dummy_imgbb_api_key"`
 - `VIDEO_API_SECRET = "dummy_video_api_secret"`
 - `VIDEO_API_CLOUD_NAME = "dummy_cloud_name"`
 - `VIDEO_API_KEY = "dummy_video_api_key"`
 - `TOKEN="dummy_token_value"`
-
-# Install
-- `python3 -m venv ./.venv`
-- `source ./.venv/bin/activate`
-- `pip install -r requirements.txt`
-
-# Run
-```
-cd ./backend
-pm2 start ./backend/main.py --name backend --namespace scambanner
-```
-```
-cd ./frontend
-pm2 start ./frontend/main.py --name frontend --namespace scambanner
-```
-
-# Maintain
-- `pm2 logs scambanner`
-- `pm2 restart scambanner`
-
-# Access
--  `https://ip:port/docs`
