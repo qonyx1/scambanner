@@ -19,9 +19,9 @@ additional_owners = [632774463552880641]
 # API Configuration
 
 [api]
-master_password = "master_password_for_the_api"  # Lets the API distinguish between a random person and the Discord bot
+master_password = "data"  # Lets the API distinguish between a random person and the Discord bot
 mongodb_db_name = "database"
-proof_proxy = true  # Do you want to upload all Discord proofs to an external site? (Edit .env)
+proof_proxy = false  # Do you want to upload all Discord proofs to an external site? (Edit .env)
 
 url = "https://127.0.0.1:8000"  # It MUST include the slash at the end AND include the protocol at the beginning (https://)
                                 # NOTE: It's assumed that you're using 127.0.0.1; you will need to heavily modify the codebase if you're not.
