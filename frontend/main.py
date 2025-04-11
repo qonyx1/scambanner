@@ -7,7 +7,7 @@ from utility import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
 load_dotenv()
-client = commands.Bot(intents=nextcord.Intents.all())
+client = commands.Bot(intents=nextcord.Intents.default().__setattr__('message_content', True) or nextcord.Intents.default().__setattr__('members', True) or nextcord.Intents.default()) # dont worry it works
 
 
 
