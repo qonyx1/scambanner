@@ -1,13 +1,26 @@
 import nextcord
 from nextcord.ext import commands
 from dotenv import load_dotenv
-import os
+import os, requests
 import logging
 from utility import logger
 from utilities import SystemConfig
 system_config = SystemConfig.system_config
 load_dotenv()
 client = commands.Bot(intents=nextcord.Intents.all())
+
+
+
+url = "https://raw.githubusercontent.com/qonyx1/scambanner/refs/heads/main/.VERSION"
+
+try:
+  version = requests.get(url=url).text
+
+  if version != system_config["general"]["version"]:
+    logger.warn("THIS INSTANCE IS OUTDATED. PLEASE VISIT THE MAIN REPOSITORY AND UPDATE YOUR SOFTWARE VERSION IMMEDIATELY")
+except Exception as e:
+  logger.error(f"Error fetching version: {e}")
+  version = "NaN"
 
 text = rf"""
 
