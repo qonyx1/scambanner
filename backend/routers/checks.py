@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from data import Data
 import logger
+from limiter import limiter
 
 database = Data.database
 
@@ -11,6 +12,7 @@ class CheckID(BaseModel):
     accused_member: int
 
 @router.post("/check_id")
+@limiter.limit("1/second")
 async def check_id(request: CheckID):
     try:
         result = database["cases"].find_one({"accused": str(request.accused_member)})
