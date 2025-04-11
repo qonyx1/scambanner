@@ -19,7 +19,7 @@ class Logged(commands.Cog):
         name="log_channel",
         description="Set a channel that will receive notifications on new cases created by the bot"
     )
-    @requires_owner()
+    # @requires_owner()
     async def log_channel(self, interaction: nextcord.Interaction, channel: nextcord.TextChannel):
         if channel.guild != interaction.guild:
             embed = nextcord.Embed(
