@@ -2,3 +2,4 @@
 .env
 *.pyc
 staging/
+system_config.toml

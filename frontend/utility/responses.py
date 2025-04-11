@@ -1,6 +1,8 @@
 import nextcord
 import logger
 
+# love how this was not used at ALL
+
 class Embeds:
     class Errors:
         PermissionsError = nextcord.Embed(

@@ -361,15 +361,27 @@ class CaseCreation(commands.Cog):
         if message.guild and not message.author.bot:
             current_time = message.created_at.timestamp()
             user_id = message.author.id
-            whitelist_entry = Data.database["bot"]["whitelists"].find_one({str(message.guild.id): {"$exists": True}})
+            guild_id_str = str(message.guild.id)
+
+            whitelist_entry = Data.database["bot"]["whitelists"].find_one({guild_id_str: {"$exists": True}})
             if whitelist_entry:
-                channel_id = whitelist_entry.get(str(message.guild.id))
+                entry = whitelist_entry[guild_id_str]
+                channel_id = entry.get("channel_id")
+                role_id = entry.get("role_id")
+
                 if channel_id and int(channel_id) == message.channel.id:
+                    if role_id:
+                        role = message.guild.get_role(int(role_id))
+                        if role not in message.author.roles:
+                            return  # User doesn't have the right role, ignore message
+
                     if message.channel.id not in self.guild_channel_cache:
                         self.guild_channel_cache.append(message.channel.id)
+
                     content = message.content.strip()
                     if content.startswith("") and content.endswith(""):
                         content = content.strip("").replace("", "", 1)
+
                     pattern = r"Accused Discord ID:\s*(\d+)\s*(?:\nInvestigator:\s*(\d+))?\s*\nReason:\s*(.+?)\s*\nProof:\s*((?:https?:\/\/\S+\s*)+)"
                     match = re.search(pattern, content, re.DOTALL)
                     if match:

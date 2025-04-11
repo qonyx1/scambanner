@@ -84,7 +84,7 @@ class Keys(commands.Cog):
 
         embed.add_field(name="Ratelimit", value=rl_text, inline=False)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @api_key.subcommand(name="delete", description="Delete an API key.")
     @commands.cooldown(1, 10, commands.BucketType.user)
@@ -120,7 +120,7 @@ class Keys(commands.Cog):
 
         embed.add_field(name="Ratelimit", value=rl_text, inline=False)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 def setup(bot):
     bot.add_cog(Keys(bot))

@@ -2,11 +2,13 @@ import nextcord, requests
 from data import Data
 import json
 from utilities import SystemConfig
+from typeguard import typechecked
 system_config = SystemConfig.system_config
 url = system_config["api"]["url"]
 
 from utility import logger
 from nextcord.ext import commands
+from utilities import check_if_main_channel, requires_owner
 
 class Cases(commands.Cog):
     def __init__(self, bot):
@@ -92,18 +94,9 @@ class Cases(commands.Cog):
             await interaction.followup.send("*This case does not exist within our records.*")
 
 
-
-
-
-
-
-
-
-
-
     @case.subcommand(name="delete", description="Delete a case from the database.")
+    @requires_owner()
     async def delete(self, interaction, case_id: str):
-
         await interaction.response.defer()
 
         case_request = requests.post(

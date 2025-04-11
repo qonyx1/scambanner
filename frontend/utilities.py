@@ -8,14 +8,33 @@ from nextcord.ui import Button, View
 from data import Data
 from utility import logger
 
-db = Data.database
-
 class SystemConfig:
     with open("../system_config.toml", mode="rb") as fp:
         system_config = tomli.load(fp) or None
 
+db = Data.database
 system_config = SystemConfig.system_config
 url = system_config["api"]["url"]
+
+
+@typechecked
+async def check_if_channel_whitelist(self, interaction: nextcord.Interaction) -> bool:
+
+    whitelist_entry = db["bot"]["whitelists"].find_one({str(interaction.guild.id): {"$exists": True}})
+    if whitelist_entry:
+        channel_id = whitelist_entry.get(str(interaction.guild.id))
+        if channel_id == interaction.channel.id:
+            return True
+        else: return False
+    else: return False
+
+@typechecked
+async def check_if_main_channel(self, interaction: nextcord.Interaction) -> bool:
+    main_channel_id = system_config["discord"]["main_channel_id"] or 0
+
+    if interaction.channel.id != main_channel_id:
+        return True
+    else: return False
 
 def requires_owner() -> None:
     def decorator(func):
