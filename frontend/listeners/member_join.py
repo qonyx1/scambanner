@@ -43,7 +43,8 @@ class MemberJoin(commands.Cog):
                         await member.send(
                             embed=embed
                         )
-                    except:
+                    except Exception as l:
+                        logger.warn(l, debug=True)
                         pass
                     await member.ban(reason=f"[CROSSBAN] via caseid {request_data.get("case_id")}, created by investigator {str(case_data["investigator"])}")
                 else:
