@@ -17,3 +17,4 @@ typeguard
 psutil
 generateApiKey
 slowapi
+hashlib
