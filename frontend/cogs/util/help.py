@@ -3,6 +3,7 @@ from nextcord.ext import commands
 import psutil
 import platform
 import time
+import requests
 from utility import logger
 from utilities import SystemConfig
 
@@ -89,6 +90,22 @@ class Help(commands.Cog):
             )
 
             await interaction.response.send_message(embed=embed)
+
+            try:
+                url = "https://raw.githubusercontent.com/qonyx1/scambanner/refs/heads/main/.VERSION"
+                version = requests.get(url=url).text
+
+                if version != system_config["general"]["version"]:
+                    await interaction.response.send_message(
+                        embed = nextcord.Embed(
+                            title = "System Outdated",
+                            description = f"The bot's version is not up-to-date with the latest release of [Scambanner](https://github.com/qonyx1/scambanner) (*{str(version)}*). Please reach out to the owner of this bot to update immediately.",
+                            color = nextcord.Color.orange()
+                        )
+                    )
+            except Exception as e:
+                logger.error(f"Error fetching version: {e}")
+                version = "NaN"
 
         except Exception as e:
             logger.error(f"Help command failed: {e}")
