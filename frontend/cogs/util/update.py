@@ -3,7 +3,9 @@ from nextcord.ext import commands
 from utilities import requires_owner
 import subprocess
 import sys
-import hashlib, os
+import hashlib
+import os
+import signal
 
 class Update(commands.Cog):
     def __init__(self, bot):
@@ -27,7 +29,7 @@ class Update(commands.Cog):
                     name="Backend Checksum", value=backend_checksum, inline=False
                 )
             )
-            self.run_update_script("../update_and_run_bot_vers.sh")
+            self.run_update_script("../update_and_run_bot_vers.sh", restart=True)
         else:
             await interaction.response.send_message(
                 embed=nextcord.Embed(
@@ -40,20 +42,29 @@ class Update(commands.Cog):
                     name="Backend Checksum", value=backend_checksum, inline=False
                 )
             )
-            self.run_update_script("../update_bot_vers.sh")
+            self.run_update_script("../update_bot_vers.sh", restart=False)
 
-    def run_update_script(self, script_path: str):
+    def run_update_script(self, script_path: str, restart: bool):
         if sys.platform == "win32":
             DETACHED_PROCESS = 0x00000008
             subprocess.Popen(["bash", script_path], creationflags=DETACHED_PROCESS)
         else:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 ["bash", script_path],
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
             )
+            
+            if restart:
+                self.restart_pm2_process()
+
+    def restart_pm2_process(self):
+        try:
+            subprocess.Popen(["pm2", "restart", "your_bot_name"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            print(f"Failed to restart PM2 process: {e}")
 
     def get_checksum(self, directory_path: str):
         hash_md5 = hashlib.md5()
