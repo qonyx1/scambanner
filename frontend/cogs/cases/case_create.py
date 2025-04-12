@@ -176,7 +176,10 @@ class ConfirmCancelView(View):
                 role = await queue_channel.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
             except:
                 role = None
-            sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
+            try:
+                sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
+            except:
+                sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
             review_view.message = sent_message
 
 
@@ -251,15 +254,43 @@ class CaseReviewView(View):
             )
             await main_log(self=self, embed=confirmation_embed)
             await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
+
+            try:
+                logger.error(int(accused_id))
+                user = await self.bot.fetch_user(int(accused_id))
+
+                embed = nextcord.Embed(
+                    title=f"Automatic ban via the {system_config["discord"]["bot_name"]} Scam Network",
+                    description=f"You have been banned from one or more servers that participate in our crossban enforcement policy.\n\nDid we make a mistake? Feel free to dispute your case here: {system_config["discord"]["main_guild_invite"]}",
+                    color=nextcord.Color.red()
+                )
+                embed.add_field(name="Case Reference Number", value=str(case_id))
+                embed.set_footer(text="This is an automated message. Contact our support team if you believe this was a mistake.")
+
+                try:
+                    await user.send(embed=embed)
+                except nextcord.Forbidden:
+                    await interaction.followup.send("*Could not DM the accused user. They may have DMs off.*", ephemeral=True)
+            except Exception:
+                await interaction.followup.send("*Failed to alert the accused user of punishment.*", ephemeral=True)
+
+
             try:
                 for guild in self.bot.guilds:
                     try:
-                        v = await guild.fetch_member(accused_id)
-                        await v.ban(reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}")
-                    except Exception:
-                        pass
+                        await guild.ban(
+                            nextcord.Object(id=accused_id),
+                            reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}"
+                        )
+                    except Exception as g:
+                        await interaction.followup.send(
+                            f"*Failed to ban this user in Guild ID: {guild.id}*",
+                            ephemeral=True
+                        )
             except Exception as e:
                 pass
+
+
             if not case_id:
                 await interaction.followup.send("Case creation failed. No case ID returned.", ephemeral=True)
         except requests.exceptions.RequestException as e:

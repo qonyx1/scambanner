@@ -102,6 +102,7 @@ class Cases(commands.Cog):
         case_request = requests.post(
             url = f"http://127.0.0.1:{system_config["api"]["port"]}/cases/fetch_case",
             json = {
+                "master_password": system_config["api"]["master_password"],
                 "case_id": case_id
             }
         )
@@ -114,11 +115,8 @@ class Cases(commands.Cog):
             }
         )
 
-        # print(delete_request.json())
-
-        if delete_request.status_code == 200 and (delete_request.json())["code"] == 0 and case_request.status_code == 200 and case_request.json().get("code") == 0:
+        if (delete_request.json())["code"] == 0:
             case_request = (case_request.json()).get("case_data")
-            # print(case_request)
 
             embed = nextcord.Embed(
                 title="Case Deleted",
@@ -169,7 +167,7 @@ class Cases(commands.Cog):
             await self.main_log(self=self,embed=embed)
 
         else:
-            await interaction.followup.send("*I couldn't fetch this case or delete it.*")
+            await interaction.followup.send("*I couldn't fetch this case or delete it, or an error occured (probaby this).*")
 
 
 

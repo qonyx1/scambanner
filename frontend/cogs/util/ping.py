@@ -13,7 +13,7 @@ class Ping(commands.Cog):
         await interaction.response.defer()
         end_time = time.perf_counter()
 
-        bot_latency = (end_time - start_time) * 1000  # in ms
+        bot_latency = (end_time - start_time) * 100  # in ms
         api_latency = self.bot.latency * 1000         # websocket latency
 
         mongo_start = time.perf_counter()

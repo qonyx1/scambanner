@@ -9,7 +9,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
-import sys
+import sys, logging
 
 system_config = SystemConfig.system_config
 app = FastAPI(
@@ -59,5 +59,5 @@ if __name__ == "__main__":     # Main starter
 
     logger.ok("Starting FastAPI server", debug=True)
     logger.ok(f"FastAPI server now serving at 127.0.0.1:{system_config['api']['port'] or 8000}")
-
+    logging.getLogger("fastapi").setLevel(logging.CRITICAL + 9) # remove all fastapi logging, set to ERROR if wanted
     uvicorn.run(app, host="0.0.0.0", port=system_config["api"]["port"] or 8000, log_level=999999999999)

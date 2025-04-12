@@ -60,5 +60,6 @@ async def on_ready():
 
 if __name__ == "__main__":
     load_cogs()
-    # logging.getLogger("nextcord").setLevel(logging.CRITICAL + 9) # remove all nextcord logging, set to ERROR if wanted
+    logging.getLogger("fastapi").setLevel(logging.CRITICAL + 9) # remove all fastapi logging, set to ERROR if wanted
+    logging.getLogger("nextcord").setLevel(logging.CRITICAL + 9) # remove all nextcord logging, set to ERROR if wanted
     client.run(os.getenv("TOKEN"))
