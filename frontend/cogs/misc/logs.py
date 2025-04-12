@@ -29,6 +29,14 @@ class Logged(commands.Cog):
             )
             return await interaction.response.send_message(embed=embed, ephemeral=True)
         
+        if interaction.author.id != interaction.guild.owner.id:
+            embed = nextcord.Embed(
+                title="Insufficient Permissions",
+                description="*You do not own this server.*",
+                color=nextcord.Color.red()
+            )
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+        
         try:
             record = db["log_channels"].find_one({"guild_id": str(interaction.guild.id)})
             if record:
