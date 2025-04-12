@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from data import Data
 import logger
 from limiter import limiter
+from fastapi import APIRouter, HTTPException, Request
 
 database = Data.database
 
@@ -13,9 +14,9 @@ class CheckID(BaseModel):
 
 @router.post("/check_id")
 @limiter.limit("1/second")
-async def check_id(request: CheckID):
+async def check_id(request: Request, payload: CheckID):
     try:
-        result = database["cases"].find_one({"accused": str(request.accused_member)})
+        result = database["cases"].find_one({"accused": str(payload.accused_member)})
 
         if result:
             return {
