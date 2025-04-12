@@ -99,7 +99,7 @@ class Help(commands.Cog):
                     await interaction.followup.send(
                         embed = nextcord.Embed(
                             title = "System Outdated",
-                            description = f"The bot's version is not up-to-date with the latest release of [Scambanner](https://github.com/qonyx1/scambanner) (*{str(version)}*). Please reach out to the owner of this bot to update immediately.",
+                            description = f"The bot's version is not up-to-date with the latest release of [Scambanner](https://github.com/qonyx1/scambanner) ({str(version)}). Please reach out to the owner of this bot to update immediately.",
                             color = nextcord.Color.orange()
                         )
                     )
