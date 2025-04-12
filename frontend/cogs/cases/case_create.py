@@ -369,7 +369,7 @@ class CaseCreation(commands.Cog):
                 channel_id = entry.get("channel_id")
                 role_id = entry.get("role_id")
 
-                if channel_id and int(channel_id) == message.channel.id:
+                if int(channel_id) == message.channel.id:
                     if role_id:
                         role = message.guild.get_role(int(role_id))
                         if role not in message.author.roles:
@@ -482,23 +482,24 @@ class CaseCreation(commands.Cog):
                     self.bot.add_view(qa_view)
                     await message.reply(embed=confirmation_embed, view=qa_view)
                 else:
-                    await message.reply(
-                        embed=nextcord.Embed(
-                            title="Invalid Case Format",
-                            description=(
-                                "**Please use the correct format:**\n\n"
-                                "Accused Discord ID: 123456789\n"
-                                "Investigator: 987654321 (optional)\n"
-                                "Reason: <reason>\n"
-                                "Proof:\n"
-                                "https://example.com\n"
-                                "https://example.com\n"
-                                "*Or just attach images/videos if you have no links*"
-                            ),
-                            color=nextcord.Color.red()
-                        )
-                    )
-                    logger.error(f"Invalid case format detected in message ID {message.id}.")
+                    return
+                    # await message.reply(
+                    #     embed=nextcord.Embed(
+                    #         title="Invalid Case Format",
+                    #         description=(
+                    #             "**Please use the correct format:**\n\n"
+                    #             "Accused Discord ID: 123456789\n"
+                    #             "Investigator: 987654321 (optional)\n"
+                    #             "Reason: <reason>\n"
+                    #             "Proof:\n"
+                    #             "https://example.com\n"
+                    #             "https://example.com\n"
+                    #             "*Or just attach images/videos if you have no links*"
+                    #         ),
+                    #         color=nextcord.Color.red()
+                    #     )
+                    # )
+                    # logger.error(f"Invalid case format detected in message ID {message.id}.")
 
 
 
