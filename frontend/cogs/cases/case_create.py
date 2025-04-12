@@ -373,7 +373,7 @@ class CaseCreation(commands.Cog):
                     if role_id:
                         role = message.guild.get_role(int(role_id))
                         if role not in message.author.roles:
-                            return  # User doesn't have the right role, ignore message
+                            return
 
                     if message.channel.id not in self.guild_channel_cache:
                         self.guild_channel_cache.append(message.channel.id)
@@ -382,89 +382,125 @@ class CaseCreation(commands.Cog):
                     if content.startswith("") and content.endswith(""):
                         content = content.strip("").replace("", "", 1)
 
-                    pattern = r"Accused Discord ID:\s*(\d+)\s*(?:\nInvestigator:\s*(\d+))?\s*\nReason:\s*(.+?)\s*\nProof:\s*((?:https?:\/\/\S+\s*)+)"
-                    match = re.search(pattern, content, re.DOTALL)
+                    pattern_with_proof = r"Accused Discord ID:\s*(\d+)\s*(?:\nInvestigator:\s*(\d+))?\s*\nReason:\s*(.+?)\s*\nProof:\s*((?:https?:\/\/\S+\s*)*)"
+                    pattern_no_proof = r"Accused Discord ID:\s*(\d+)\s*(?:\nInvestigator:\s*(\d+))?\s*\nReason:\s*(.+)"
+
+                    match = re.search(pattern_with_proof, content, re.DOTALL)
+                    proof_links = []
+
                     if match:
                         accused_id = match.group(1)
                         investigator_id = match.group(2)
                         reason = match.group(3).strip()
                         proof_links = [link.strip() for link in match.group(4).split("\n") if link.strip()]
-                        if not accused_id or not reason or not proof_links:
-                            return
+                    else:
+                        match = re.search(pattern_no_proof, content, re.DOTALL)
+                        if match:
+                            accused_id = match.group(1)
+                            investigator_id = match.group(2)
+                            reason = match.group(3).strip()
+                        else:
+                            accused_id = None
 
-                        try:
-                            req = requests.post(
-                                url=f"http://127.0.0.1:{system_config['api']['port']}/checks/check_id",
-                                json = {
-                                        "accused_member": int(accused_id)
+                    if message.attachments:
+                        attachment_urls = [attachment.url for attachment in message.attachments]
+                        proof_links.extend(attachment_urls)
+
+                    if not accused_id or not reason or not proof_links:
+                        return
+
+                    try:
+                        req = requests.post(
+                            url=f"http://127.0.0.1:{system_config['api']['port']}/checks/check_id",
+                            json={
+                                "accused_member": int(accused_id)
+                            }
+                        )
+                        if req.json().get("code") == 0:
+                            caid = req.json().get("case_id")
+                            x_embed = nextcord.Embed(
+                                title="User already has a case",
+                                description="Please delete this case from the database before making a new one.",
+                                color=nextcord.Color.red()
+                            )
+                            x_embed.add_field(name="Case ID", value=str(caid))
+                            try:
+                                tmp = requests.post(
+                                    url=f"http://127.0.0.1:{system_config['api']['port']}/cases/fetch_case",
+                                    json={
+                                        "case_id": caid
                                     }
                                 )
-                            if req.json().get("code") == 0:
-                                caid = req.json().get("case_id")
-                                x_embed = nextcord.Embed(
-                                    title="User already has a case",
-                                    description="Please delete this case from the database before making a new one.",
-                                    color=nextcord.Color.red()
+                                if tmp.json().get("case_data"):
+                                    x_embed.add_field(name="Investigator", value=f"<@{tmp.json().get('case_data')['investigator']}>")
+                                    x_embed.add_field(name="Time", value=f"<t:{tmp.json().get('case_data')['created_at']}>")
+                                    x_embed.add_field(name="Reason", value=tmp.json().get('case_data')["reason"])
+                            except:
+                                pass
+                            await message.reply(embed=x_embed)
+                            return
+                    except Exception as e:
+                        logger.error(e, debug=True)
+                        pass
+
+                    if investigator_id:
+                        if int(investigator_id) != message.author.id:
+                            try:
+                                fetched_investigator = await self.bot.fetch_user(int(investigator_id))
+                                investigator_final = SimpleNamespace(
+                                    name=fetched_investigator.name,
+                                    id=fetched_investigator.id,
+                                    behalf_of=message.author.id
                                 )
-                                x_embed.add_field(name="Case ID", value=str(caid))
-
-                                try:
-                                    tmp = requests.post(
-                                        url=f"http://127.0.0.1:{system_config['api']['port']}/cases/fetch_case",
-                                        json = {
-                                                "case_id": caid
-                                            }
-                                    )
-                                    if tmp.json().get("case_data"):
-                                        x_embed.add_field(name="Investigator",value=f"<@{tmp.json().get("case_data")["investigator"]}>")
-                                        x_embed.add_field(name="Time",value=f"<t:{tmp.json().get("case_data")["created_at"]}>")
-                                        x_embed.add_field(name="Reason",value=tmp.json().get("case_data")["reason"])
-                                except:
-                                    pass
-
-                                await message.reply(embed=x_embed)
-                                return
-                        except Exception as e:
-                            logger.error(e, debug=True)
-                            pass
-                        if investigator_id:
-                            if int(investigator_id) != message.author.id:
-                                try:
-                                    fetched_investigator = await self.bot.fetch_user(int(investigator_id))
-                                    investigator_final = SimpleNamespace(name=fetched_investigator.name, id=fetched_investigator.id, behalf_of=message.author.id)
-                                except Exception:
-                                    investigator_final = message.author
-                            else:
+                            except Exception:
                                 investigator_final = message.author
                         else:
                             investigator_final = message.author
-                        try:
-                            accused = await self.bot.fetch_user(int(accused_id))
-                        except Exception:
-                            accused = "NaN"
-                        responsible_guild = message.guild
-                        confirmation_embed = build_case_embed(
-                            responsible_guild,
-                            accused,
-                            investigator_final,
-                            message.created_at,
-                            reason,
-                            proof_links
-                        )
-                        confirmation_embed.title = "Confirm Case Submission"
-                        confirmation_embed.set_footer(text="After confirming, this case will be reviewed by our quality assurance team.")
-                        qa_view = ConfirmCancelView(self.bot, message, accused_id, reason, proof_links, investigator_final)
-                        self.bot.add_view(qa_view)
-                        await message.reply(embed=confirmation_embed, view=qa_view)
                     else:
-                        await message.reply(
-                            embed=nextcord.Embed(
-                                title="Invalid Case Format",
-                                description="**Please use the correct format:**\n\nAccused Discord ID: 123456789\nInvestigator: 987654321 (optional)\nReason: <reason>\nProof:\nhttps://example.com\nhttps://example.com\n",
-                                color=nextcord.Color.red()
-                            )
+                        investigator_final = message.author
+
+                    try:
+                        accused = await self.bot.fetch_user(int(accused_id))
+                    except Exception:
+                        accused = "NaN"
+
+                    responsible_guild = message.guild
+                    confirmation_embed = build_case_embed(
+                        responsible_guild,
+                        accused,
+                        investigator_final,
+                        message.created_at,
+                        reason,
+                        proof_links
+                    )
+                    confirmation_embed.title = "Confirm Case Submission"
+                    confirmation_embed.set_footer(
+                        text="After confirming, this case will be reviewed by our quality assurance team."
+                    )
+
+                    qa_view = ConfirmCancelView(self.bot, message, accused_id, reason, proof_links, investigator_final)
+                    self.bot.add_view(qa_view)
+                    await message.reply(embed=confirmation_embed, view=qa_view)
+                else:
+                    await message.reply(
+                        embed=nextcord.Embed(
+                            title="Invalid Case Format",
+                            description=(
+                                "**Please use the correct format:**\n\n"
+                                "Accused Discord ID: 123456789\n"
+                                "Investigator: 987654321 (optional)\n"
+                                "Reason: <reason>\n"
+                                "Proof:\n"
+                                "https://example.com\n"
+                                "https://example.com\n"
+                                "*Or just attach images/videos if you have no links*"
+                            ),
+                            color=nextcord.Color.red()
                         )
-                        logger.error(f"Invalid case format detected in message ID {message.id}.")
+                    )
+                    logger.error(f"Invalid case format detected in message ID {message.id}.")
+
+
 
 def setup(bot):
     bot.add_cog(CaseCreation(bot))

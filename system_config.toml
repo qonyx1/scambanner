@@ -9,7 +9,7 @@ main_channel_id = 1355605890472083688          # All cases made by servers will 
 main_log_channel_id = 1355614903037198386      # The channel that all new cases/deleted cases get logged to          
 main_guild_invite = "https://discord.gg/rdevs"
 
-admin_team_role_id = 1356122401334755499       # The role id required in the main guild to delete cases
+admin_team_role_id = 1355614903037198386       # The role id required in the main guild to delete cases
 bot_name = "Scammerban"                        # What the bot refers to itself as (if speaking in 1st person for some reason)
 additional_owners = [632774463552880641]
 
@@ -20,12 +20,12 @@ additional_owners = [632774463552880641]
 
 [api]
 master_password = "data"  # Lets the API distinguish between a random person and the Discord bot
-mongodb_db_name = "database"
+mongodb_db_name = "dev"
 proof_proxy = false  # Do you want to upload all Discord proofs to an external site? (Edit .env)
 
 url = "https://127.0.0.1:8000"  # It MUST include the slash at the end AND include the protocol at the beginning (https://)
                                 # NOTE: It's assumed that you're using 127.0.0.1; you will need to heavily modify the codebase if you're not.
-port = 8000  # Same port used in the URL
+port = 7775  # Same port used in the URL
 
 case_fetch_password_needed = true            # Set this to `true` if you want to require a password to fetch a case
 case_fetch_hide_investigator = true          # If the above setting is set to `false`, you can hide the investigators unless you pass the correct `master_password`
@@ -41,5 +41,5 @@ case_dump_hide_investigator = true          # If the above setting is set to `fa
 
 # General Settings
 [general]
-debug_mode = true
+debug_mode = false
 version = "1.0.0"
