@@ -23,8 +23,7 @@ class Status(commands.Cog):
             choices={
                 "Playing": "playing",
                 "Listening": "listening",
-                "Watching": "watching",
-                "Streaming": "streaming"
+                "Watching": "watching"
             }
         ),
         status_text: str = nextcord.SlashOption(
@@ -51,8 +50,6 @@ class Status(commands.Cog):
             activity = nextcord.Activity(type=nextcord.ActivityType.listening, name=final_text)
         elif activity_type == "watching":
             activity = nextcord.Activity(type=nextcord.ActivityType.watching, name=final_text)
-        elif activity_type == "streaming":
-            activity = nextcord.Streaming(name=final_text, url="https://twitch.tv/yourchannel")
 
         status_map = {
             "online": nextcord.Status.online,
@@ -60,10 +57,26 @@ class Status(commands.Cog):
             "dnd": nextcord.Status.dnd
         }
 
+        pretty_status = "DND" if status_mode == "dnd" else status_mode.title()
+
+        colors = {
+            nextcord.Status.online: nextcord.Color.green(),
+            nextcord.Status.idle: nextcord.Color.orange(),
+            nextcord.Status.dnd: nextcord.Color.red()
+        }
+
+        embed = nextcord.Embed(
+            title="Bot Status Updated",
+            color=colors[status_map[status_mode]]
+        )
+        embed.add_field(name="Activity", value=activity_type.title())
+        embed.add_field(name="Status", value=pretty_status)
+        embed.add_field(name="Text", value=final_text)
+
         await self.bot.change_presence(status=status_map[status_mode], activity=activity)
         await interaction.response.send_message(
-            f"Bot status updated:\n**{activity_type.title()}** {final_text}\n**Status:** {status_mode.title()}",
-            ephemeral=True
+            embed=embed,
+            ephemeral=False
         )
 
 def setup(bot):
