@@ -2,7 +2,6 @@
 # Updates but does not run/restart the program.
 
 set -e
-# cd .. # this is why its a entirely different file
 BACKEND_DIR="backend"
 FRONTEND_DIR="frontend"
 REPO_URL="https://github.com/qonyx1/scambanner.git"
@@ -31,15 +30,7 @@ fi
 
 "$PYTHON_INTERPRETER" -m pip install -r "./requirements.txt"
 
-pm2 delete scambanner_backend || true  
-pm2 delete scambanner_frontend || true  
-
-cd "$BACKEND_DIR"
-pm2 start main.py --name scambanner_backend --interpreter "$PYTHON_INTERPRETER" --namespace scambanner
-cd ..
-
-cd "$FRONTEND_DIR"
-pm2 start main.py --name scambanner_frontend --interpreter "$PYTHON_INTERPRETER" --namespace scambanner
-cd ..
+pm2 restart scambanner_backend || pm2 start "$BACKEND_DIR/main.py" --name scambanner_backend --interpreter "$PYTHON_INTERPRETER" --namespace scambanner
+pm2 restart scambanner_frontend || pm2 start "$FRONTEND_DIR/main.py" --name scambanner_frontend --interpreter "$PYTHON_INTERPRETER" --namespace scambanner
 
 echo "Backend and frontend started successfully."
