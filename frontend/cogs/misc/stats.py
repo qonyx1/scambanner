@@ -41,7 +41,7 @@ class Stats(commands.Cog):
         now = datetime.now()
         days_ago = now - timedelta(days=int(timeframe[:-1]))
 
-        counts = { (days_ago + timedelta(days=i)).date(): 0 for i in range(int(timeframe[:-1])) }
+        counts = { (days_ago + timedelta(days=i)).date(): 0 for i in range(int(timeframe[:-1]) + 1) }
 
         for case in cases:
             try:
@@ -60,7 +60,9 @@ class Stats(commands.Cog):
                 continue
 
             if days_ago <= created_at <= now:
-                counts[created_at.date()] += 1
+                created_date = created_at.date()
+                if created_date in counts:
+                    counts[created_date] += 1
 
         days = sorted(counts.keys())
         counts_list = [counts[day] for day in days]
@@ -84,9 +86,7 @@ class Stats(commands.Cog):
         fig.autofmt_xdate(rotation=45)
         ax.grid(True, color="#333333", linestyle="--", linewidth=0.7)
         ax.set_facecolor("#0f0f0f")
-        
         ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
-        
         plt.tight_layout()
 
         buf = BytesIO()
