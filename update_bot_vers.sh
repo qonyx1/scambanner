@@ -2,7 +2,7 @@
 # Updates but does not run/restart the program.
 
 set -e
-cd ..
+# cd ..
 BACKEND_DIR="backend"
 FRONTEND_DIR="frontend"
 REPO_URL="https://github.com/qonyx1/scambanner.git"

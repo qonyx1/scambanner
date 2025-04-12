@@ -28,7 +28,6 @@ class Update(commands.Cog):
                 )
             )
             os.system("bash ../update_bot_vers.sh")
-            return
 
 
 def setup(bot):
