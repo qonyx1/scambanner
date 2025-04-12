@@ -5,7 +5,6 @@ import subprocess
 import sys
 import hashlib
 import os
-import signal
 
 class Update(commands.Cog):
     def __init__(self, bot):
@@ -50,7 +49,7 @@ class Update(commands.Cog):
             subprocess.Popen(["bash", script_path], creationflags=DETACHED_PROCESS)
         else:
             process = subprocess.Popen(
-                ["bash", script_path],
+                ["nohup", "bash", script_path, "&"],
                 start_new_session=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -62,7 +61,12 @@ class Update(commands.Cog):
 
     def restart_pm2_process(self):
         try:
-            subprocess.Popen(["pm2", "restart", "your_bot_name"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                ["pm2", "restart", "scambanner_backend", "scambanner_frontend"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL
+            )
         except Exception as e:
             print(f"Failed to restart PM2 process: {e}")
 
