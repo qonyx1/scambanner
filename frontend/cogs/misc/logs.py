@@ -29,7 +29,7 @@ class Logged(commands.Cog):
             )
             return await interaction.response.send_message(embed=embed, ephemeral=True)
         
-        if interaction.author.id != interaction.guild.owner.id:
+        if interaction.user.id != interaction.guild.owner.id:
             embed = nextcord.Embed(
                 title="Insufficient Permissions",
                 description="*You do not own this server.*",
