@@ -172,8 +172,11 @@ class ConfirmCancelView(View):
                 processed_proof_links
             )
             review_view = CaseReviewView(self.bot, case_embed, self.accused_id, self.reason, processed_proof_links, responsible_guild, investigator)
-            role = await interaction.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
-            sent_message = await queue_channel.send(f"{role.mention}",embed=case_embed, view=review_view)
+            try:
+                role = await queue_channel.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
+            except:
+                role = None
+            sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
             review_view.message = sent_message
 
 
