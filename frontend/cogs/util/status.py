@@ -6,6 +6,12 @@ class Status(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        total_members = sum(guild.member_count for guild in self.bot.guilds)
+        activity = nextcord.Activity(type=nextcord.ActivityType.watching, name=f"over {str(total_members)} members")
+        await self.bot.change_presence(status=nextcord.Status.dnd, activity=activity)
+
     @nextcord.slash_command(name="setstatus", description="Change the bot's status and activity.")
     @requires_owner()
     async def setstatus(
