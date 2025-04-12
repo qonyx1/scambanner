@@ -102,20 +102,22 @@ class UnbanButton(Button):
                 ephemeral=True
             )
             return
+        
+        return await interaction.response.send_message("*Due to security concerns, this command has been disabled until further notice. Feel free to [contribute here!](https://github.com/qonyx1/scambanner)*")
 
-        guild_id, user_id = map(int, self.custom_id.split(":")[1:])
-        try:
-            guild = await interaction.client.fetch_guild(guild_id)
-            user = await interaction.client.fetch_user(user_id)
-            await guild.unban(user, reason=f"Manual unban by {interaction.user.id}")
-            await interaction.response.send_message(
-                f"*{user.name} has been unbanned from the server.*",
-                ephemeral=True
-            )
-        except Forbidden:
-            await interaction.response.send_message("*I don’t have permission to unban in this server.*", ephemeral=True)
-        except Exception as e:
-            await interaction.response.send_message(f"*Failed to unban this member. Are they banned?*", ephemeral=True)
+        # guild_id, user_id = map(int, self.custom_id.split(":")[1:])
+        # try:
+        #     guild = await interaction.client.fetch_guild(guild_id)
+        #     user = await interaction.client.fetch_user(user_id)
+        #     await guild.unban(user, reason=f"Manual unban by {interaction.user.id}")
+        #     await interaction.response.send_message(
+        #         f"*{user.name} has been unbanned from the server.*",
+        #         ephemeral=True
+        #     )
+        # except Forbidden:
+        #     await interaction.response.send_message("*I don’t have permission to unban in this server.*", ephemeral=True)
+        # except Exception as e:
+        #     await interaction.response.send_message(f"*Failed to unban this member. Are they banned?*", ephemeral=True)
 
 class TemporaryUnbanView(View):
     def __init__(self):
