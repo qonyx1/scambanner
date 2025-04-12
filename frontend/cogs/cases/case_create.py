@@ -426,7 +426,11 @@ class CaseCreation(commands.Cog):
                     if match:
                         accused_id = match.group(1)
                         investigator_id = match.group(2)
+
                         reason = match.group(3).strip()
+                        reason = reason.replace("```", "").strip()
+                        reason = f"```\n{reason}\n```"
+
                         proof_links = [link.strip() for link in match.group(4).split("\n") if link.strip()]
                     else:
                         match = re.search(pattern_no_proof, content, re.DOTALL)
@@ -434,6 +438,9 @@ class CaseCreation(commands.Cog):
                             accused_id = match.group(1)
                             investigator_id = match.group(2)
                             reason = match.group(3).strip()
+                            reason = reason.replace("```", "").strip()
+                            reason = f"```\n{reason}\n```"
+
                         else:
                             accused_id = None
 
