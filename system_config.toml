@@ -42,4 +42,3 @@ case_dump_hide_investigator = true          # If the above setting is set to `fa
 # General Settings
 [general]
 debug_mode = false
-version = "1.0.0"

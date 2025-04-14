@@ -91,14 +91,11 @@ class Help(commands.Cog):
 
             await interaction.response.send_message(embed=embed)
 
-            with open("../.VERSION", "r") as f:
-                local_version = f.read()
-
             try:
                 url = "https://raw.githubusercontent.com/qonyx1/scambanner/refs/heads/main/.VERSION"
                 version = requests.get(url=url).text
 
-                if version != local_version:
+                if version != system_config["general"]["version"]:
                     await interaction.followup.send(
                         embed = nextcord.Embed(
                             title = "System Outdated",

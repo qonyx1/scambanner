@@ -13,13 +13,10 @@ client = commands.Bot(intents=nextcord.Intents.all()) # dont worry it works
 
 url = "https://raw.githubusercontent.com/qonyx1/scambanner/refs/heads/main/.VERSION"
 
-with open("../.VERSION", "r") as f:
-    local_version = f.read()
-
 try:
   version = requests.get(url=url).text
 
-  if version != local_version:
+  if version != system_config["general"]["version"]:
     logger.warn("THIS INSTANCE IS OUTDATED. PLEASE VISIT THE MAIN REPOSITORY AND UPDATE YOUR SOFTWARE VERSION IMMEDIATELY")
 except Exception as e:
   logger.error(f"Error fetching version: {e}")
@@ -34,14 +31,14 @@ text = rf"""
  \__ \ (_| (_| | | | | | | |_) | (_| | | | | | | |  __/ |   
  |___/\___\__,_|_| |_| |_|_.__/ \__,_|_| |_|_| |_|\___|_|   
                                                             
-     Beginning execution | v{local_version} | github.com/qonyx1
+     Beginning execution | v{system_config["general"]["version"]} | github.com/qonyx1
 
      
 
 """
-
 from pystyle import Center
 print(Center.XCenter(text))
+
 
 def load_cogs():
     for folder in ["./cogs", "./listeners"]:
@@ -63,9 +60,6 @@ async def on_ready():
 
 if __name__ == "__main__":
     load_cogs()
-
-    if system_config["general"]["debug_mode"] != True:
-        logging.getLogger("fastapi").setLevel(logging.CRITICAL + 9) # remove all fastapi logging, set to ERROR if wanted
-        logging.getLogger("nextcord").setLevel(logging.CRITICAL + 9) # remove all nextcord logging, set to ERROR if wanted
-
+    logging.getLogger("fastapi").setLevel(logging.CRITICAL + 9) # remove all fastapi logging, set to ERROR if wanted
+    logging.getLogger("nextcord").setLevel(logging.CRITICAL + 9) # remove all nextcord logging, set to ERROR if wanted
     client.run(os.getenv("TOKEN"))
