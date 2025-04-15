@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>[BOTNAME]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background-color: #445ca4;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2e4ba4;
+            transform: translateY(-5px);
+        }
+
+        .btn-secondary {
+            background-color: #445ca4;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2e4ba4;
+            transform: translateY(-5px);
+        }
+
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-title {
+            color: #A3BFFA;
+        }
+
+        .footer-text {
+            color: #A0AEC0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white">
+
+    <header class="bg-gray-800 text-center py-24 fade-in">
+        <h1 class="text-5xl font-extrabold text-gray-100 mb-6">[BOTNAME]</h1>
+        <p class="text-lg text-gray-300 mb-8">Your trusted Discord bot to keep scammers at bay</p>
+        <a href="/docs" class="btn-secondary">Docs</a>
+        <a href="[BOTLINK]" class="btn-primary">Add the Bot</a>
+    </header>
+
+    <section class="py-16 bg-gray-900 flex-grow">
+        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12">
+            <div class="bg-gray-800 p-8 rounded-lg shadow-lg card fade-in">
+                <h3 class="text-2xl font-semibold mb-4 feature-title">Open Source</h3>
+                <p class="text-gray-300">[BOTNAME] is fully open-source, allowing you to contribute, customize, and improve the bot for everyone.</p>
+            </div>
+            <div class="bg-gray-800 p-8 rounded-lg shadow-lg card fade-in">
+                <h3 class="text-2xl font-semibold mb-4 feature-title">Quality Assurance</h3>
+                <p class="text-gray-300">We prioritize quality and performance. [BOTNAME] undergoes rigorous testing to ensure a smooth user experience.</p>
+            </div>
+            <div class="bg-gray-800 p-8 rounded-lg shadow-lg card fade-in">
+                <h3 class="text-2xl font-semibold mb-4 feature-title">Customizable</h3>
+                <p class="text-gray-300">[BOTNAME] is highly customizable. You can configure it to suit your specific server needs and preferences.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-center py-6">
+        <p class="footer-text text-sm">
+            Based on the open-source project <a href="https://github.com/qonyx1/scambanner" target="_blank"
+                class="text-blue-400 hover:underline">Scambanner</a> | Copyright 2025 ONYXLLC
+        </p>
+    </footer>
+</body>
+</html>
