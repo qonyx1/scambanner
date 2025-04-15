@@ -8,7 +8,7 @@ class Status(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        total_members = sum(guild.member_count or 0 for guild in self.bot.guilds)
+        total_members = sum(len(guild.members) for guild in self.bot.guilds)
         formatted_members = f"{total_members:,}"
         activity = nextcord.Activity(
             type=nextcord.ActivityType.watching,
@@ -44,7 +44,7 @@ class Status(commands.Cog):
             }
         )
     ):
-        total_members = sum(guild.member_count or 0 for guild in self.bot.guilds)
+        total_members = sum(len(guild.members) for guild in self.bot.guilds)
         total_guilds = len(self.bot.guilds)
         formatted_members = f"{total_members:,}"
         formatted_guilds = f"{total_guilds:,}"
