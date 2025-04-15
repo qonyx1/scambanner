@@ -2,10 +2,11 @@ import os
 import time
 import datetime
 import logging
+import nextcord
 from urllib.parse import urlparse
 from typing import List, Optional
 
-import aiohttp
+import aiohttp, asyncio
 import aiofiles
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,11 +16,15 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from data import Data
-from modules import custom_uploads
+from modules import custom_uploads, webhook_logger
 from utilities import Generate, SystemConfig
 import logger
 from limiter import limiter  # limiter is defined inside `limiter.py`
+import requests, httpx
 
+import time
+from datetime import timezone
+from typing import Optional
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -61,58 +66,101 @@ allowed_paths = {
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
+async def build_case_embed(responsible_guild, accused, investigator, created_at, reason, proof_links, api_key=False):
+    if api_key:
+        embed = nextcord.Embed(
+            title=f"📜 Case from {responsible_guild} [API_KEY]",
+            color=nextcord.Color.orange()
+        )
+    else:
+        embed = nextcord.Embed(
+            title=f"📜 Case from {responsible_guild}",
+            color=nextcord.Color.orange()
+        )
+
+    embed.add_field(
+        name="🧑‍⚖️ Accused",
+        value=accused if accused != "NaN" else "NaN",
+        inline=False
+    )
+    embed.add_field(
+        name="🔍 Investigator",
+        value=investigator,
+        inline=False
+    )
+    embed.add_field(
+        name="⏳ Time",
+        value=f"<t:{int(created_at)}:F>",
+        inline=False
+    )
+    embed.add_field(
+        name="📌 Reason",
+        value=f"\n\n{reason}\n\n",
+        inline=False
+    )
+    if proof_links:
+        embed.add_field(
+            name="🖼 Proof",
+            value="\n".join(proof_links),
+            inline=False
+        )
+    return embed
+
 async def check_rate_limit(api_key: Optional[str]) -> bool:
-    log.debug("Entering check_rate_limit")
     try:
         if not api_key:
-            return True
+            return True  # No API key provided, skip rate limit check
 
         key_info = database["keys"].find_one({"_id": api_key})
         if not key_info or "ratelimit" not in key_info:
-            return True
+            return True  # No rate limit set for this key, so no limit check
 
         rate_limit_info = key_info["ratelimit"]
         max_requests = rate_limit_info["max_requests"]
         time_window = rate_limit_info["time_window"]
 
-        current_time = int(time.time())
+        current_time = int(time.time())  # Current time in seconds
         last_request_time = rate_limit_info.get("last_request_time", current_time)
         request_count = rate_limit_info.get("request_count", 0)
 
-        if current_time - last_request_time > time_window:
+        # Check if the time window has passed (current time - last request time > time window)
+        if current_time - last_request_time >= time_window:
             request_count = 0
 
         if request_count >= max_requests:
-            log.debug("Rate limit exceeded")
-            return False
+            return False  # Rate limit exceeded, deny the request
 
         database["keys"].update_one(
             {"_id": api_key},
-            {"$set": {"ratelimit.last_request_time": current_time, "ratelimit.request_count": request_count + 1}}
+            {
+                "$set": {
+                    "ratelimit.last_request_time": current_time,  # Update last request time
+                    "ratelimit.request_count": request_count + 1   # Increment request count
+                }
+            }
         )
 
-        log.debug("Exiting check_rate_limit with success")
-        return True
+        return True  # Allow the request
     except Exception as e:
-        log.error(f"Error in check_rate_limit: {e}", exc_info=True)
         return False
 
 async def authorize_action(master_password: str, api_key: Optional[str], action: str) -> bool:
     log.debug("Entering authorize_action")
     try:
+        # Check if master password matches
         if master_password == system_config["api"]["master_password"]:
             return True
 
+        # If API key is provided, authorize action and check rate limit
         if api_key:
             if not await check_rate_limit(api_key):
-                return False
+                return False  # Rate limit exceeded, deny action
 
             key_info = database["keys"].find_one({"_id": api_key})
             if key_info and key_info.get(action, False):
-                return True
+                return True  # The key has permission to perform the action
 
-        log.debug("Exiting authorize_action with failure")
-        return False
+        return False  # No permission to perform action
     except Exception as e:
         log.error(f"Error in authorize_action: {e}", exc_info=True)
         return False
@@ -130,7 +178,6 @@ async def download_file(domain: str, path: str, dest: str):
                 if response.status == 200:
                     async with aiofiles.open(dest, 'wb') as f:
                         await f.write(await response.read())
-                    log.debug(f"File downloaded successfully: {dest}")
                     return dest
                 else:
                     logger.error(f"Failed to download file from {url} with status code {response.status}")
@@ -141,7 +188,6 @@ async def download_file(domain: str, path: str, dest: str):
 @router.post("/create_case")
 @limiter.limit("1/second")
 async def create_case(request: Request, payload: CreateCase):
-    log.debug("create_case endpoint called")
     if not await authorize_action(payload.master_password, payload.api_key, "create_case"):
         return {"code": 1, "body": "You are not authorized to run this action or you have exceeded the rate limit."}
 
@@ -151,7 +197,7 @@ async def create_case(request: Request, payload: CreateCase):
             logger.warn("[CREATE_CASE] User already has a case against them, aborting..", debug=True)
             return {"code": 1, "body": f"This user already has a case against them: {result['_id']}", "case_id": result["_id"]}
     except Exception as e:
-        logger.error(f"[CREATE_CASE] Failed during duplicate check: {e}", exc_info=True)
+        logger.error(f"[CREATE_CASE] Failed during duplicate check: {e}")
 
     updated_proof_links = []
     temp_dir = "temp_downloads"
@@ -199,11 +245,35 @@ async def create_case(request: Request, payload: CreateCase):
             "created_at": int(datetime.datetime.now().timestamp()),
             "proof": updated_proof_links
         })
+
+        if payload.api_key:
+            embed = await build_case_embed(
+                responsible_guild = str(payload.server_id),
+                accused = str(payload.accused_member),
+                investigator = str(payload.investigator_member),
+                reason = payload.reason,
+                created_at = int(datetime.datetime.now().timestamp()),
+                proof_links = updated_proof_links,
+                api_key = True
+            )
+
+            embed.set_footer(text=f"Sent by {payload.api_key}")
+        else:
+            embed = await build_case_embed(
+                responsible_guild = str(payload.server_id),
+                accused = str(payload.accused_member),
+                investigator = str(payload.investigator_member),
+                reason = payload.reason,
+                created_at = int(datetime.datetime.now().timestamp()),
+                proof_links = updated_proof_links
+            )
+
+        await webhook_logger.log_object(embed=embed)
+
     except Exception as f:
-        logger.error(f"[CREATE_CASE] Database error: {f}", exc_info=True)
+        logger.error(f"[CREATE_CASE] Database error: {f}")
         return {"code": 1, "body": "A database error has occurred."}
 
-    log.debug("Exiting create_case successfully")
     return {
         "code": 0,
         "body": "Case created successfully.",
@@ -213,18 +283,67 @@ async def create_case(request: Request, payload: CreateCase):
 @router.post("/delete_case")
 @limiter.limit("1/second")
 async def delete_case(request: Request, payload: DeleteCase):
-    log.debug("delete_case endpoint called")
     if system_config["api"].get("case_fetch_password_needed", False):
         if not await authorize_action(payload.master_password, payload.api_key, "delete_case"):
             return {"code": 1, "body": "You are not authorized to run this action."}
-    
+        
+    await asyncio.sleep(1)  # dont ratelimit ourselves lol
+    case_info = None
+
+    try:
+        async with httpx.AsyncClient() as client:
+            case_info_response = await client.post(
+                url=f"http://127.0.0.1:{system_config['api']['port']}/cases/fetch_case",
+                json={
+                    "master_password": system_config["api"]["master_password"],
+                    "case_id": payload.case_id
+                }
+            )
+            case_info_json = case_info_response.json()
+            if case_info_json.get("code") == 0:
+                case_info = case_info_json["case_data"]
+    except Exception as e:
+        logger.error(f"[DELETE_CASE] Failed to fetch case: {e}", exc_info=True)
+
     try:
         result = database["cases"].delete_one({"_id": payload.case_id})
+
         if result.deleted_count >= 1:
-            log.debug("delete_case succeeded")
+
+            if case_info:
+                embed = await build_case_embed(
+                    responsible_guild=case_info["server_id"],
+                    accused=case_info["accused"],
+                    investigator=case_info.get("investigator", "Unknown"),
+                    created_at=case_info["created_at"],
+                    reason=case_info["reason"],
+                    proof_links=case_info.get("proof", []),
+                    api_key=bool(payload.api_key)
+                )
+                embed.title = f"🗑️ Case Deleted ({payload.case_id})"
+                embed.color = nextcord.Color.red()
+            else:
+                embed = await build_case_embed(
+                    responsible_guild=case_info["server_id"],
+                    accused=case_info["accused"],
+                    investigator=case_info.get("investigator", "Unknown"),
+                    created_at=case_info["created_at"],
+                    reason=case_info["reason"],
+                    proof_links=case_info.get("proof", []),
+                    api_key=bool(payload.api_key)
+                )
+                embed.title = f"🗑️ Case Deleted ({payload.case_id})"
+                embed.color = nextcord.Color.red()
+
+            if payload.api_key and payload.api_key != "string":
+                embed.add_field(name="🔑 API Key", value=f"`{payload.api_key}`", inline=False)
+
+            await webhook_logger.log_object(embed=embed)
+
             return {"code": 0, "body": f"Case {payload.case_id} deleted successfully."}
         else:
             return {"code": 1, "body": "No case found with the provided case ID."}
+
     except Exception as e:
         logger.error(f"[DELETE_CASE] {e}", exc_info=True)
         return {"code": 1, "body": "A database error has occurred while deleting the case."}
@@ -258,8 +377,10 @@ async def fetch_case(request: Request, payload: FetchCase):
 async def dump(request: Request, payload: DumpCases):
     log.debug("dump endpoint called")
     if system_config["api"]["case_dump_password_needed"] != False:
-        if payload.master_password != system_config["api"]["master_password"]:
+        if not await authorize_action(payload.master_password, payload.api_key, "case_dump"):
             return {"code": 1, "body": "You are not authorized to run this action."}
+        # if payload.master_password != system_config["api"]["master_password"]:
+        #     return {"code": 1, "body": "You are not authorized to run this action."}
     try:
         cases_cursor = database["cases"].find()
         cases = []

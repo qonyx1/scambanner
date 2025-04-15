@@ -18,3 +18,4 @@ psutil
 generateApiKey
 slowapi
 hashlib
+httpx

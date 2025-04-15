@@ -60,6 +60,8 @@ if __name__ == "__main__":     # Main starter
     logger.ok("Starting FastAPI server", debug=True)
     logger.ok(f"FastAPI server now serving at 127.0.0.1:{system_config['api']['port'] or 8000}")
 
+    logging.getLogger('pymongo').setLevel(logging.ERROR)
+
     if system_config["general"]["debug_mode"] != True:
         logging.getLogger("fastapi").setLevel(logging.CRITICAL + 9) # remove all fastapi logging, set to ERROR if wanted
 

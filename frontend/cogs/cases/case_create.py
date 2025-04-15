@@ -23,6 +23,7 @@ import aiohttp
 from urllib.parse import urlparse
 from utility import custom_uploads
 from types import SimpleNamespace
+from utility import webhook_logger
 
 system_config = SystemConfig.system_config
 
@@ -112,17 +113,6 @@ def build_case_embed(responsible_guild, accused, investigator, created_at, reaso
             inline=False
         )
     return embed
-
-@staticmethod
-async def main_log(self, embed: nextcord.Embed) -> bool:
-    try:
-        log_channel = int(system_config["discord"]["main_log_channel_id"])
-        log_channel = await self.bot.fetch_channel(log_channel)
-        await log_channel.send(embed=embed)
-        return True
-    except Exception as e:
-        logger.error(f"Logging error: {e}")
-        return False
 
 class ConfirmCancelView(View):
     def __init__(self, bot, message, accused_id, reason, proof_links, investigator):
@@ -235,6 +225,7 @@ class CaseReviewView(View):
             )
             if create_request.status_code != 200:
                 await interaction.followup.send("Failed to communicate with the database (non-200 response).", ephemeral=True)
+                logger.error(f"[CASE_CREATE] {create_request.json()}")
                 return
             response_json = create_request.json()
             if response_json is None or "case_data" not in response_json:
@@ -252,7 +243,7 @@ class CaseReviewView(View):
                 self.reason,
                 self.proof_links
             )
-            await main_log(self=self, embed=confirmation_embed)
+            # await webhook_logger.log_object(embed=confirmation_embed)        <- Now logged by the API itself
             await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
 
             try:
@@ -277,6 +268,9 @@ class CaseReviewView(View):
 
             try:
                 for guild in self.bot.guilds:
+                    if guild.id == system_config["discord"]["main_guild_id"]:
+                        continue
+                    
                     try:
                         await guild.ban(
                             nextcord.Object(id=accused_id),
