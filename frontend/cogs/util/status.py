@@ -1,5 +1,6 @@
 import nextcord
 from nextcord.ext import commands
+import asyncio
 from utilities import requires_owner
 
 class Status(commands.Cog):
@@ -8,6 +9,7 @@ class Status(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        await asyncio.sleep(5)
         total_members = sum(len(guild.members) for guild in self.bot.guilds)
         formatted_members = f"{total_members:,}"
         activity = nextcord.Activity(
