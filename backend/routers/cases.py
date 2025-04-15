@@ -147,20 +147,19 @@ async def check_rate_limit(api_key: Optional[str]) -> bool:
 async def authorize_action(master_password: str, api_key: Optional[str], action: str) -> bool:
     log.debug("Entering authorize_action")
     try:
-        # Check if master password matches
+
         if master_password == system_config["api"]["master_password"]:
             return True
 
-        # If API key is provided, authorize action and check rate limit
         if api_key:
             if not await check_rate_limit(api_key):
-                return False  # Rate limit exceeded, deny action
+                return False
 
             key_info = database["keys"].find_one({"_id": api_key})
             if key_info and key_info.get(action, False):
-                return True  # The key has permission to perform the action
+                return True
 
-        return False  # No permission to perform action
+        return False
     except Exception as e:
         log.error(f"Error in authorize_action: {e}", exc_info=True)
         return False
@@ -241,7 +240,7 @@ async def create_case(request: Request, payload: CreateCase):
             "server_id": str(payload.server_id),
             "accused": str(payload.accused_member),
             "investigator": str(payload.investigator_member),
-            "reason": payload.reason,
+            "reason": payload.reason.replace('`',''),
             "created_at": int(datetime.datetime.now().timestamp()),
             "proof": updated_proof_links
         })
@@ -251,7 +250,7 @@ async def create_case(request: Request, payload: CreateCase):
                 responsible_guild = str(payload.server_id),
                 accused = str(payload.accused_member),
                 investigator = str(payload.investigator_member),
-                reason = payload.reason,
+                reason = f"```{payload.reason.replace('`','')}```",
                 created_at = int(datetime.datetime.now().timestamp()),
                 proof_links = updated_proof_links,
                 api_key = True
@@ -263,7 +262,7 @@ async def create_case(request: Request, payload: CreateCase):
                 responsible_guild = str(payload.server_id),
                 accused = str(payload.accused_member),
                 investigator = str(payload.investigator_member),
-                reason = payload.reason,
+                reason = f"```{payload.reason.replace('`','')}```",
                 created_at = int(datetime.datetime.now().timestamp()),
                 proof_links = updated_proof_links
             )
@@ -316,7 +315,7 @@ async def delete_case(request: Request, payload: DeleteCase):
                     accused=case_info["accused"],
                     investigator=case_info.get("investigator", "Unknown"),
                     created_at=case_info["created_at"],
-                    reason=case_info["reason"],
+                    reason=f"```{case_info["reason"].replace('`','')}```",
                     proof_links=case_info.get("proof", []),
                     api_key=bool(payload.api_key)
                 )
@@ -328,7 +327,7 @@ async def delete_case(request: Request, payload: DeleteCase):
                     accused=case_info["accused"],
                     investigator=case_info.get("investigator", "Unknown"),
                     created_at=case_info["created_at"],
-                    reason=case_info["reason"],
+                    reason=f"```{case_info["reason"].replace('`','')}```",
                     proof_links=case_info.get("proof", []),
                     api_key=bool(payload.api_key)
                 )

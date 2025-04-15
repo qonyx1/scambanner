@@ -33,6 +33,21 @@ discord_cdn_domains = [
     "images-ext-1.discordapp.net"
 ]
 
+async def apply_shortcuts(text: str) -> str:
+    shortcuts = {
+        doc["keyword"]: doc["value"]
+        for doc in Data.database["shortcuts"].find()
+        if "keyword" in doc and "value" in doc
+    }
+
+    def replace(match):
+        keyword = match.group(1)
+        if keyword in shortcuts:
+            return f"[{shortcuts[keyword]}]"
+        return match.group(0)  # Keep original [keyword] if no match
+
+    return re.sub(r"\[([^\[\]]+)\]", replace, text)
+
 async def download_file(url, dest_path):
     try:
         async with aiohttp.ClientSession() as session:
@@ -103,7 +118,7 @@ def build_case_embed(responsible_guild, accused, investigator, created_at, reaso
     )
     embed.add_field(
         name="📌 Reason",
-        value=f"\n\n{reason}\n\n",
+        value=f"```{reason.replace("`", "")}```",
         inline=False
     )
     if proof_links:
@@ -240,7 +255,7 @@ class CaseReviewView(View):
                 accused_obj,
                 self.investigator,
                 datetime.datetime.now(),
-                self.reason,
+                f"```{self.reason.replace("`", "")}```",
                 self.proof_links
             )
             # await webhook_logger.log_object(embed=confirmation_embed)        <- Now logged by the API itself
@@ -270,7 +285,7 @@ class CaseReviewView(View):
                 for guild in self.bot.guilds:
                     if guild.id == system_config["discord"]["main_guild_id"]:
                         continue
-                    
+
                     try:
                         await guild.ban(
                             nextcord.Object(id=accused_id),
@@ -323,7 +338,7 @@ class RejectDetailsView(nextcord.ui.View):
         else:
             investigator_id = self.investigator
         details_embed.add_field(name="🔍 Investigator ID", value=str(investigator_id), inline=False)
-        details_embed.add_field(name="📌 Reason", value=self.reason, inline=False)
+        details_embed.add_field(name="📌 Reason", value=f"```{self.reason.replace("`", "")}```", inline=False)
         if self.proof_links:
             details_embed.add_field(name="🖼 Proof", value="\n".join(self.proof_links), inline=False)
         await interaction.response.send_message(embed=details_embed, ephemeral=True)
@@ -362,7 +377,7 @@ class RejectCaseModal(nextcord.ui.Modal):
                 color=nextcord.Color.red()
             )
             dm_embed.add_field(name="🧑‍⚖️ Accused ID", value=str(self.accused_id), inline=True)
-            dm_embed.add_field(name="📌 Reason", value=reason, inline=True)
+            dm_embed.add_field(name="📌 Reason", value=f"```{reason.replace("`", "")}```", inline=True)
             details_view = RejectDetailsView(
                 accused_id=self.accused_id,
                 investigator=self.investigator,
@@ -423,7 +438,7 @@ class CaseCreation(commands.Cog):
 
                         reason = match.group(3).strip()
                         reason = reason.replace("```", "").strip()
-                        reason = f"```\n{reason}\n```"
+                        reason = f"\n{reason}\n"
 
                         proof_links = [link.strip() for link in match.group(4).split("\n") if link.strip()]
                     else:
@@ -433,10 +448,15 @@ class CaseCreation(commands.Cog):
                             investigator_id = match.group(2)
                             reason = match.group(3).strip()
                             reason = reason.replace("```", "").strip()
-                            reason = f"```\n{reason}\n```"
+                            reason = f"\n{reason}\n"
 
                         else:
                             accused_id = None
+
+                    try:
+                        reason = await apply_shortcuts(text=reason)
+                    except Exception as b:
+                        logger.error(f"[CASE_CREATE_SHORTCUTS] {b}")
 
                     if message.attachments:
                         attachment_urls = [attachment.url for attachment in message.attachments]
@@ -506,7 +526,7 @@ class CaseCreation(commands.Cog):
                         accused,
                         investigator_final,
                         message.created_at,
-                        reason,
+                        f"```{reason.replace("`", "")}```",
                         proof_links
                     )
                     confirmation_embed.title = "Confirm Case Submission"
@@ -519,23 +539,6 @@ class CaseCreation(commands.Cog):
                     await message.reply(embed=confirmation_embed, view=qa_view)
                 else:
                     return
-                    # await message.reply(
-                    #     embed=nextcord.Embed(
-                    #         title="Invalid Case Format",
-                    #         description=(
-                    #             "**Please use the correct format:**\n\n"
-                    #             "Accused Discord ID: 123456789\n"
-                    #             "Investigator: 987654321 (optional)\n"
-                    #             "Reason: <reason>\n"
-                    #             "Proof:\n"
-                    #             "https://example.com\n"
-                    #             "https://example.com\n"
-                    #             "*Or just attach images/videos if you have no links*"
-                    #         ),
-                    #         color=nextcord.Color.red()
-                    #     )
-                    # )
-                    # logger.error(f"Invalid case format detected in message ID {message.id}.")
 
 
 
