@@ -8,8 +8,12 @@ class Status(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        total_members = sum(guild.member_count for guild in self.bot.guilds)
-        activity = nextcord.Activity(type=nextcord.ActivityType.watching, name=f"over {str(total_members)} members")
+        total_members = sum(guild.member_count or 0 for guild in self.bot.guilds)
+        formatted_members = f"{total_members:,}"
+        activity = nextcord.Activity(
+            type=nextcord.ActivityType.watching,
+            name=f"over {formatted_members} members"
+        )
         await self.bot.change_presence(status=nextcord.Status.dnd, activity=activity)
 
     @nextcord.slash_command(name="setstatus", description="Change the bot's status and activity.")
@@ -40,9 +44,12 @@ class Status(commands.Cog):
             }
         )
     ):
-        total_members = sum(guild.member_count for guild in self.bot.guilds)
+        total_members = sum(guild.member_count or 0 for guild in self.bot.guilds)
         total_guilds = len(self.bot.guilds)
-        final_text = status_text.replace("$members", str(total_members)).replace("$guilds", str(total_guilds))
+        formatted_members = f"{total_members:,}"
+        formatted_guilds = f"{total_guilds:,}"
+        
+        final_text = status_text.replace("$members", formatted_members).replace("$guilds", formatted_guilds)
 
         if activity_type == "playing":
             activity = nextcord.Game(name=final_text)
