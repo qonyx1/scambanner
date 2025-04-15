@@ -57,4 +57,5 @@ To run this project, you will need to add the following environment variables to
 - `VIDEO_API_SECRET = "dummy_video_api_secret"`
 - `VIDEO_API_CLOUD_NAME = "dummy_cloud_name"`
 - `VIDEO_API_KEY = "dummy_video_api_key"`
-- `TOKEN="dummy_token_value"`
+- `TOKEN = "dummy_token_value"`
+- `WEBHOOK_URL = "https://discord.com/api/webhooks"`
