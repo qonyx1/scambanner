@@ -121,6 +121,32 @@ class Cases(commands.Cog):
         embed.set_footer(text=f"🆔: {case_id} • Case deleted")
         await interaction.edit_original_message(embed=embed)
 
+        msg = await interaction.followup.send(
+            f"*Attempting to unban <@{accused.id}> from all servers..*",
+            ephemeral=True
+        )
+
+        try:
+            for guild in self.bot.guilds:
+                try:
+                    ban_entry = await guild.fetch_ban(accused)
+                    if ban_entry.reason and ban_entry.reason.startswith("[CROSSBAN]"):
+                        await guild.unban(user=accused, reason="[CROSSBAN] Case deleted by administrator, unbanned from all servers.")
+                except Exception as e:
+                    logger.error(f"[BAN_ERROR] Failed to check or unban {accused.id} from {guild.id}: {e}")
+
+            await msg.edit(
+                content=f"*Successfully unbanned <@{accused.id}> from all servers.*",
+            )
+        except Exception as l:
+            await msg.edit(
+                content=f"*Failed to unban <@{accused.id}> from all servers.*",
+                embed=nextcord.Embed(
+                    description=l
+                )
+            )
+            return
+
 
 def setup(bot):
     bot.add_cog(Cases(bot))
