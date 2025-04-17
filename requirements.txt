@@ -17,5 +17,6 @@ typeguard
 psutil
 generateApiKey
 slowapi
-hashlib
 httpx
+nextcord
+logger
