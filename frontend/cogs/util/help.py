@@ -5,6 +5,7 @@ import platform
 import time
 import requests
 from utility import logger
+from main import local_version
 from utilities import SystemConfig
 
 system_config = SystemConfig.system_config
@@ -66,7 +67,7 @@ class Help(commands.Cog):
                     command_list += f"➤ /{getattr(command, 'name', str(command))} (error)\n"
 
             embed = nextcord.Embed(
-                title=f"{system_config['discord']['bot_name']} v{system_config['general']['version']}",
+                title=f"{system_config['discord']['bot_name']} v{local_version}",
                 url="https://github.com/qonyx1/scambanner",
                 description=f"**Commands:**\n```{command_list}```",
                 color=nextcord.Color.green()
@@ -90,9 +91,6 @@ class Help(commands.Cog):
             )
 
             await interaction.response.send_message(embed=embed)
-
-            with open("../.VERSION", "r") as f:
-                local_version = f.read()
 
             try:
                 url = "https://raw.githubusercontent.com/qonyx1/scambanner/refs/heads/main/.VERSION"
