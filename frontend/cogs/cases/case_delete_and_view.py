@@ -20,7 +20,7 @@ async def safe_fetch(fetch_func: Callable[[int], Any], identifier: Any, id_type:
     try:
         return await fetch_func(int(identifier))
     except Exception as e:
-        logger.warning(f"[FETCH_ERROR] Failed to fetch {id_type} ID {identifier}: {e}")
+        logger.warn(f"[FETCH_ERROR] Failed to fetch {id_type} ID {identifier}: {e}")
         return "NaN"
 
 
@@ -31,7 +31,7 @@ def safe_api_request(endpoint: str, payload: dict) -> Optional[dict]:
             response = requests.post(full_url, json=payload, timeout=5)
             if response.status_code == 200:
                 return response.json()
-            logger.warning(f"[API_ERROR] Non-200 response from {endpoint}: {response.status_code} | {response.text}")
+            logger.warn(f"[API_ERROR] Non-200 response from {endpoint}: {response.status_code} | {response.text}")
         except requests.RequestException as e:
             logger.error(f"[API_ERROR] Attempt {attempt + 1} failed for {endpoint}: {e}")
         asyncio.run(asyncio.sleep(RETRY_DELAY))
