@@ -202,13 +202,18 @@ async def create_case(request: Request, payload: CreateCase):
     updated_proof_links = []
 
     try:
+        # Ensure that 'temp_downloads' directory exists
+        temp_downloads_dir = 'temp_downloads'
+        if not os.path.exists(temp_downloads_dir):
+            os.makedirs(temp_downloads_dir)  # Create directory if it doesn't exist
+
         with tempfile.TemporaryDirectory(prefix="proof_") as temp_dir:
             if system_config["api"]["proof_proxy"]:
                 for link in payload.proof:
                     try:
                         if any(domain in link for domain in allowed_paths):
                             filename = os.path.basename(urlparse(link).path)
-                            filepath = os.path.join(temp_dir, filename)
+                            filepath = os.path.join(temp_downloads_dir, filename)  # Save to 'temp_downloads' directory
 
                             parsed_link = urlparse(link)
                             downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
@@ -240,30 +245,30 @@ async def create_case(request: Request, payload: CreateCase):
             "server_id": str(payload.server_id),
             "accused": str(payload.accused_member),
             "investigator": str(payload.investigator_member),
-            "reason": payload.reason.replace('`',''),
+            "reason": payload.reason.replace('',''),
             "created_at": int(datetime.datetime.now().timestamp()),
             "proof": updated_proof_links
         })
 
         if payload.api_key:
             embed = await build_case_embed(
-                responsible_guild = str(payload.server_id),
-                accused = str(payload.accused_member),
-                investigator = str(payload.investigator_member),
-                reason = f"```{payload.reason.replace('`','')}```",
-                created_at = int(datetime.datetime.now().timestamp()),
-                proof_links = updated_proof_links,
-                api_key = True
+                responsible_guild=str(payload.server_id),
+                accused=str(payload.accused_member),
+                investigator=str(payload.investigator_member),
+                reason=f"{payload.reason.replace('`','')}",
+                created_at=int(datetime.datetime.now().timestamp()),
+                proof_links=updated_proof_links,
+                api_key=True
             )
             embed.set_footer(text=f"Sent by {payload.api_key}")
         else:
             embed = await build_case_embed(
-                responsible_guild = str(payload.server_id),
-                accused = str(payload.accused_member),
-                investigator = str(payload.investigator_member),
-                reason = f"```{payload.reason.replace('`','')}```",
-                created_at = int(datetime.datetime.now().timestamp()),
-                proof_links = updated_proof_links
+                responsible_guild=str(payload.server_id),
+                accused=str(payload.accused_member),
+                investigator=str(payload.investigator_member),
+                reason=f"{payload.reason.replace('`','')}",
+                created_at=int(datetime.datetime.now().timestamp()),
+                proof_links=updated_proof_links
             )
 
         await webhook_logger.log_object(embed=embed)
