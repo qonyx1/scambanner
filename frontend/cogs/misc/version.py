@@ -15,7 +15,7 @@ class Version(commands.Cog):
             col = nextcord.Color.red()
         else:
             col = nextcord.Color.green()
-            
+
         await interaction.response.send_message(
             embed = nextcord.Embed(
                 title = "Bot Version",
@@ -24,7 +24,6 @@ class Version(commands.Cog):
             ).add_field(name = "Local Version", value = local_version).add_field(name = "GitHub Version", value = version)
         )
         return
-
 
 def setup(bot):
     bot.add_cog(Version(bot))
