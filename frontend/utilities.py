@@ -103,7 +103,7 @@ class UnbanButton(Button):
             )
             return
         
-        return await interaction.response.send_message("*Due to security concerns, this command has been disabled until further notice. Feel free to [contribute here!](https://github.com/qonyx1/scambanner)*")
+        return await interaction.response.send_message("*Due to security concerns, this command has been disabled until further notice. Feel free to [contribute here!](https://github.com/qonyx1/scambanner)*", ephemeral=True)
 
         # guild_id, user_id = map(int, self.custom_id.split(":")[1:])
         # try:
