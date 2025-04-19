@@ -221,8 +221,8 @@ class CaseReviewView(View):
             return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
 
         # Very important check, makes sure that investigators aren't approving their own posts.
-        # if interaction.user.id == self.investigator.id:
-        #     return await interaction.response.send_message("*You can't approve your own case!*", ephemeral=True)
+        if interaction.user.id == self.investigator.id:
+            return await interaction.response.send_message("*You can't approve your own case!*", ephemeral=True)
 
         await self.disable_buttons_and_update_embed(interaction, "approve")
         await interaction.response.defer()

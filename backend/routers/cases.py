@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import aiohttp, asyncio
 import aiofiles
+import tempfile
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -199,42 +200,41 @@ async def create_case(request: Request, payload: CreateCase):
         logger.error(f"[CREATE_CASE] Failed during duplicate check: {e}")
 
     updated_proof_links = []
-    temp_dir = "temp_downloads"
-    os.makedirs(temp_dir, exist_ok=True)
-
-    if system_config["api"]["proof_proxy"]:
-        for link in payload.proof:
-            try:
-                if any(domain in link for domain in allowed_paths):
-                    filename = os.path.basename(urlparse(link).path)
-                    filepath = os.path.join(temp_dir, filename)
-
-                    parsed_link = urlparse(link)
-                    downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
-                    if downloaded_file:
-                        try:
-                            if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
-                                new_link = custom_uploads.upload_image(downloaded_file)
-                            elif filename.lower().endswith((".mp4", ".mov", ".avi")):
-                                new_link = custom_uploads.upload_video(downloaded_file)
-                            else:
-                                continue
-
-                            updated_proof_links.append(new_link)
-                        except Exception as e:
-                            logger.error(f"[UPLOAD_ERROR] Failed to upload {filename}: {e}", exc_info=True)
-                        finally:
-                            os.remove(downloaded_file)
-                    else:
-                        logger.error(f"Failed to download proof file: {link}")
-                else:
-                    updated_proof_links.append(link)
-            except Exception as e:
-                logger.error(f"Error processing proof link {link}: {e}", exc_info=True)
-
-    uuid = str(Generate.gen_id())
 
     try:
+        with tempfile.TemporaryDirectory(prefix="proof_") as temp_dir:
+            if system_config["api"]["proof_proxy"]:
+                for link in payload.proof:
+                    try:
+                        if any(domain in link for domain in allowed_paths):
+                            filename = os.path.basename(urlparse(link).path)
+                            filepath = os.path.join(temp_dir, filename)
+
+                            parsed_link = urlparse(link)
+                            downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
+                            if downloaded_file:
+                                try:
+                                    if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+                                        new_link = custom_uploads.upload_image(downloaded_file)
+                                    elif filename.lower().endswith((".mp4", ".mov", ".avi")):
+                                        new_link = custom_uploads.upload_video(downloaded_file)
+                                    else:
+                                        continue
+
+                                    updated_proof_links.append(new_link)
+                                except Exception as e:
+                                    logger.error(f"[UPLOAD_ERROR] Failed to upload {filename}: {e}", exc_info=True)
+                                finally:
+                                    os.remove(downloaded_file)
+                            else:
+                                logger.error(f"Failed to download proof file: {link}")
+                        else:
+                            updated_proof_links.append(link)
+                    except Exception as e:
+                        logger.error(f"Error processing proof link {link}: {e}", exc_info=True)
+
+        uuid = str(Generate.gen_id())
+
         database["cases"].insert_one({
             "_id": uuid,
             "server_id": str(payload.server_id),
@@ -255,7 +255,6 @@ async def create_case(request: Request, payload: CreateCase):
                 proof_links = updated_proof_links,
                 api_key = True
             )
-
             embed.set_footer(text=f"Sent by {payload.api_key}")
         else:
             embed = await build_case_embed(
