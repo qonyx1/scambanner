@@ -50,7 +50,7 @@ class Shortcuts(commands.Cog):
         embed.add_field(name="Keyword", value=f"`[{clean_keyword}]`", inline=False)
         embed.add_field(name="Value", value=f"```{clean_value}```", inline=False)
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     @shortcut.subcommand(name="remove", description="Remove an existing shortcut.")
     @requires_owner()
@@ -78,7 +78,7 @@ class Shortcuts(commands.Cog):
                 color=nextcord.Color.orange()
             )
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
     @shortcut.subcommand(name="list", description="List all available shortcuts.")
     @requires_owner()
@@ -102,7 +102,7 @@ class Shortcuts(commands.Cog):
                 content = content[:4000] + "\n...and more"
             embed.description = content
 
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embed=embed, ephemeral=False)
 
 def setup(bot):
     bot.add_cog(Shortcuts(bot))
