@@ -14,7 +14,7 @@ class Version(commands.Cog):
         await interaction.response.send_message(
             embed = nextcord.Embed(
                 title = "Version Comparison",
-                color = nextcord.Embed.orange() 
+                color = nextcord.Color.orange() 
             ).add_field(name = "Local Version", value = local_version).add_field(name = "GitHub Version", value = version)
         )
 
