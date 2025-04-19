@@ -211,22 +211,33 @@ class CaseReviewView(View):
         self.embed.set_footer(text=f"Reviewed by {interaction.user.name} ({interaction.user.id})")
         await interaction.message.edit(embed=self.embed, view=None)
 
+
     @nextcord.ui.button(label="Approve", style=nextcord.ButtonStyle.green, custom_id="approve_case")
     async def approve(self, button: Button, interaction: nextcord.Interaction):
         try:
             role = await interaction.guild.fetch_role(system_config["discord"]["admin_team_role_id"])
             if role not in interaction.user.roles:
-                return await interaction.response.send_message("*You need to be have the configured administrator role to use this!*")
-        except:
-            return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
+                return await interaction.response.send_message(
+                    "*You need to have the configured administrator role to use this!*"
+                )
+        except Exception:
+            return await interaction.response.send_message(
+                "*I couldn't access the server's configured admin role.*"
+            )
 
-        # Very important check, makes sure that investigators aren't approving their own posts.
-        if interaction.user.id == self.investigator.id:
-            return await interaction.response.send_message("*You can't approve your own case!*", ephemeral=True)
+        # if interaction.user.id == self.investigator.id:
+        #     return await interaction.response.send_message(
+        #         "*You can't approve your own case!*", ephemeral=True
+        #     )
 
         await self.disable_buttons_and_update_embed(interaction, "approve")
         await interaction.response.defer()
-        accused_id = int(self.accused_id)
+
+        try:
+            accused_id = int(self.accused_id)
+        except ValueError:
+            return await interaction.followup.send("Invalid accused ID format.", ephemeral=True)
+
         payload = {
             "master_password": system_config["api"]["master_password"],
             "server_id": self.responsible_guild.id,
@@ -241,36 +252,42 @@ class CaseReviewView(View):
                 url=f"http://127.0.0.1:{system_config['api']['port']}/cases/create_case",
                 json=payload
             )
+
             if create_request.status_code != 200:
                 await interaction.followup.send("Failed to communicate with the database (non-200 response).", ephemeral=True)
                 logger.error(f"[CASE_CREATE] {create_request.json()}")
                 return
+
             response_json = create_request.json()
-            if response_json is None or "case_data" not in response_json:
+            if not response_json or "case_data" not in response_json:
                 await interaction.followup.send("Failed to create the case in the database.", ephemeral=True)
                 return
-            case_data = response_json.get("case_data")
+
+            case_data = response_json["case_data"]
             case_id = case_data.get("case_id")
+
             await send_case_logs(self, case_id)
+
             accused_obj = await self.bot.fetch_user(accused_id)
             confirmation_embed = build_case_embed(
                 self.responsible_guild,
                 accused_obj,
                 self.investigator,
                 datetime.datetime.now(),
-                f"```{self.reason.replace("`", "")}```",
+                f"```{self.reason.replace('`', '')}```",
                 self.proof_links
             )
-            # await webhook_logger.log_object(embed=confirmation_embed)        <- Now logged by the API itself
-            await interaction.followup.send(f"This case has been approved and created with the Case ID: **{case_id}**", ephemeral=True)
+            await interaction.followup.send(
+                f"This case has been approved and created with the Case ID: **{case_id}**",
+                ephemeral=True
+            )
 
+            # Notify accused user via DM
             try:
-                logger.error(int(accused_id))
-                user = await self.bot.fetch_user(int(accused_id))
-
+                user = await self.bot.fetch_user(accused_id)
                 embed = nextcord.Embed(
-                    title=f"Automatic ban via the {system_config["discord"]["bot_name"]} Scam Network",
-                    description=f"You have been banned from one or more servers that participate in our crossban enforcement policy.\n\nDid we make a mistake? Feel free to dispute your case here: {system_config["discord"]["main_guild_invite"]}",
+                    title=f"Automatic ban via the {system_config['discord']['bot_name']} Scam Network",
+                    description=f"You have been banned from one or more servers that participate in our crossban enforcement policy.\n\nDid we make a mistake? Feel free to dispute your case here: {system_config['discord']['main_guild_invite']}",
                     color=nextcord.Color.red()
                 )
                 embed.add_field(name="Case Reference Number", value=str(case_id))
@@ -283,31 +300,30 @@ class CaseReviewView(View):
             except Exception:
                 await interaction.followup.send("*Failed to alert the accused user of punishment.*", ephemeral=True)
 
-
+            # Crossban user in all other servers
             try:
                 for guild in self.bot.guilds:
                     if guild.id == system_config["discord"]["main_guild_id"]:
                         continue
-
                     try:
                         await guild.ban(
                             nextcord.Object(id=accused_id),
                             reason=f"[CROSSBAN] via caseid {case_id}, created by investigator {self.investigator}"
                         )
-                    except Exception as g:
+                    except Exception:
                         await interaction.followup.send(
                             f"*Failed to ban this user in Guild ID: {guild.id}*",
                             ephemeral=True
                         )
-            except Exception as e:
+            except Exception:
                 pass
 
+            # Assign banned role in main guild
             try:
-                guild = await self.bot.fetch_guild(system_config["discord"]["main_guild_id"])
-                member = await guild.fetch_member(self.accused_id)
-                banned_role_id = system_config["discord"]["banned_role_id"]
-                banned_role = await guild.fetch_role(banned_role_id)
-                
+                main_guild = await self.bot.fetch_guild(system_config["discord"]["main_guild_id"])
+                member = await main_guild.fetch_member(accused_id)
+                banned_role = await main_guild.fetch_role(system_config["discord"]["banned_role_id"])
+
                 if banned_role:
                     try:
                         await member.add_roles(banned_role, reason="Auto-assigned on join due to an active case")
@@ -315,17 +331,18 @@ class CaseReviewView(View):
                     except Exception as e:
                         logger.error(f"Failed to assign role to {member.name}: {e}", debug=False)
                 else:
-                    logger.warn(f"Banned role with ID {banned_role_id} not found in guild.", debug=False)
+                    logger.warn(f"Banned role with ID {system_config['discord']['banned_role_id']} not found in guild.", debug=False)
             except Exception as g:
                 logger.error(g, debug=False)
-                pass
-
 
             if not case_id:
                 await interaction.followup.send("Case creation failed. No case ID returned.", ephemeral=True)
+
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to submit the case: {e}")
             await interaction.followup.send("Failed to submit the case to the database.", ephemeral=True)
+
+
 
     @nextcord.ui.button(label="Reject", style=nextcord.ButtonStyle.red, custom_id="reject_case")
     async def reject(self, button: Button, interaction: nextcord.Interaction):
@@ -335,6 +352,11 @@ class CaseReviewView(View):
                 return await interaction.response.send_message("*You need to have the configured administrator role to use this!*")
         except:
             return await interaction.response.send_message("*I couldn't access the server's configured admin role.*")
+
+        if interaction.user.id == self.investigator.id:
+            return await interaction.response.send_message(
+                "*You can't deny your own case!*", ephemeral=True
+            )
         
         modal = RejectCaseModal(self.investigator, self.accused_id, self)
         await interaction.response.send_modal(modal)

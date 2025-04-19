@@ -86,7 +86,7 @@ class Shortcuts(commands.Cog):
         self,
         interaction: nextcord.Interaction
     ):
-        shortcuts = shortcuts_collection.find()
+        shortcuts = shortcuts_collection.find() 
         shortcut_list = [f"`[{doc['keyword']}]` → `{doc['value']}`" for doc in shortcuts]
 
         embed = Embed(
