@@ -19,6 +19,24 @@ class MemberJoin(commands.Cog):
             url=f"http://127.0.0.1:{system_config['api']['port']}/checks/check_id",
             json={"accused_member": member.id}
         )
+
+        try:
+            if guild.id == system_config["discord"]["main_guild_id"]:
+                guild = member.guild
+                banned_role_id = system_config["discord"]["banned_role_id"]
+                banned_role = await guild.fetch_role(banned_role_id)
+                
+                if banned_role:
+                    try:
+                        await member.add_roles(banned_role, reason="Auto-assigned on join due to an active case")
+                        logger.ok(f"Assigned banned role to {member.name}", debug=True)
+                    except Exception as e:
+                        logger.error(f"Failed to assign role to {member.name}: {e}", debug=False)
+                else:
+                    logger.warn(f"Banned role with ID {banned_role_id} not found in guild.", debug=False)
+        except Exception as c:
+            logger.error(c)
+            pass
         
         if request.status_code == 200:
             request_data = request.json()
@@ -32,7 +50,7 @@ class MemberJoin(commands.Cog):
                 
                 if case_request.status_code == 200 and case_request.json().get("code") == 0:
                     case_data = case_request.json().get("case_data")
-                    
+
                     try:
                         embed=nextcord.Embed(
                                 title="You have been crossbanned",

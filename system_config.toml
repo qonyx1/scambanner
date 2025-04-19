@@ -9,6 +9,7 @@ main_channel_id = 1355605890472083688          # All cases made by servers will 
 main_log_channel_id = 1355614903037198386      # The channel that all new cases/deleted cases get logged to          
 main_guild_invite = "https://discord.gg/yWUe8g5vke"
 
+banned_role_id = 1362971610063310939
 admin_team_role_id = 1356122401334755499       # The role id required in the main guild to delete cases
 bot_name = "Nighthawk"                        # What the bot refers to itself as (if speaking in 1st person for some reason)
 bot_invite = "https://discord.com/oauth2/authorize?client_id=1360019402782937139&permissions=1617122684101&integration_type=0&scope=bot"
