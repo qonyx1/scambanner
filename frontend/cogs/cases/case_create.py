@@ -182,8 +182,8 @@ class ConfirmCancelView(View):
             except:
                 role = None
             try:
-                # sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
-                sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
+                sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
+                # sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
             except:
                 sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
             review_view.message = sent_message
@@ -226,10 +226,10 @@ class CaseReviewView(View):
                 "*I couldn't access the server's configured admin role.*"
             )
 
-        # if interaction.user.id == self.investigator.id:
-        #     return await interaction.response.send_message(
-        #         "*You can't approve your own case!*", ephemeral=True
-        #     )
+        if interaction.user.id == self.investigator.id:
+            return await interaction.response.send_message(
+                "*You can't approve your own case!*", ephemeral=True
+            )
 
         await self.disable_buttons_and_update_embed(interaction, "approve")
         await interaction.response.defer()

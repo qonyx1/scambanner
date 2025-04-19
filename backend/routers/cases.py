@@ -202,41 +202,44 @@ async def create_case(request: Request, payload: CreateCase):
     updated_proof_links = []
 
     try:
-        # Ensure 'temp_downloads' directory exists with an absolute path
-        temp_downloads_dir = os.path.abspath('./temp_downloads')
-        if not os.path.exists(temp_downloads_dir):
-            os.makedirs(temp_downloads_dir)  # Create directory if it doesn't exist
+        try:
+            temp_downloads_dir = os.path.abspath('./temp_downloads')
+            if not os.path.exists(temp_downloads_dir):
+                os.makedirs(temp_downloads_dir)  # Create directory if it doesn't exist
 
-        with tempfile.TemporaryDirectory(prefix="proof_") as temp_dir:
-            if system_config["api"]["proof_proxy"]:
-                for link in payload.proof:
-                    try:
-                        if any(domain in link for domain in allowed_paths):
-                            filename = os.path.basename(urlparse(link).path)
-                            filepath = os.path.join(temp_downloads_dir, filename)  # Save to 'temp_downloads' directory
+            with tempfile.TemporaryDirectory(prefix="proof_") as temp_dir:
+                if system_config["api"]["proof_proxy"]:
+                    for link in payload.proof:
+                        try:
+                            if any(domain in link for domain in allowed_paths):
+                                filename = os.path.basename(urlparse(link).path)
+                                filepath = os.path.join(temp_downloads_dir, filename)  # Save to 'temp_downloads' directory
 
-                            parsed_link = urlparse(link)
-                            downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
-                            if downloaded_file:
-                                try:
-                                    if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
-                                        new_link = custom_uploads.upload_image(downloaded_file)
-                                    elif filename.lower().endswith((".mp4", ".mov", ".avi")):
-                                        new_link = custom_uploads.upload_video(downloaded_file)
-                                    else:
-                                        continue
+                                parsed_link = urlparse(link)
+                                downloaded_file = await download_file(parsed_link.netloc, parsed_link.path, filepath)
+                                if downloaded_file:
+                                    try:
+                                        if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
+                                            new_link = custom_uploads.upload_image(downloaded_file)
+                                        elif filename.lower().endswith((".mp4", ".mov", ".avi")):
+                                            new_link = custom_uploads.upload_video(downloaded_file)
+                                        else:
+                                            continue
 
-                                    updated_proof_links.append(new_link)
-                                except Exception as e:
-                                    logger.error(f"[UPLOAD_ERROR] Failed to upload {filename}: {e}", exc_info=True)
-                                finally:
-                                    os.remove(downloaded_file)
+                                        updated_proof_links.append(new_link)
+                                    except Exception as e:
+                                        logger.error(f"[UPLOAD_ERROR] Failed to upload {filename}: {e}")
+                                    finally:
+                                        os.remove(downloaded_file)
+                                else:
+                                    logger.error(f"Failed to download proof file: {link}")
                             else:
-                                logger.error(f"Failed to download proof file: {link}")
-                        else:
-                            updated_proof_links.append(link)
-                    except Exception as e:
-                        logger.error(f"Error processing proof link {link}: {e}", exc_info=True)
+                                updated_proof_links.append(link)
+                        except Exception as e:
+                            logger.error(f"Error processing proof link {link}: {e}")
+
+        except Exception as e:
+            logger.error(f"[CREATE_CASE] Failed to download proof files: {e}")
 
         uuid = str(Generate.gen_id())
 
