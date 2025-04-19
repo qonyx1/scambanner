@@ -235,6 +235,7 @@ class CaseReviewView(View):
             "reason": self.reason,
             "proof": self.proof_links
         }
+
         try:
             create_request = requests.post(
                 url=f"http://127.0.0.1:{system_config['api']['port']}/cases/create_case",
@@ -299,6 +300,24 @@ class CaseReviewView(View):
                             ephemeral=True
                         )
             except Exception as e:
+                pass
+
+            try:
+                guild = await self.bot.fetch_guild(system_config["discord"]["main_guild_id"])
+                member = await guild.fetch_member(self.accused_id)
+                banned_role_id = system_config["discord"]["banned_role_id"]
+                banned_role = await guild.fetch_role(banned_role_id)
+                
+                if banned_role:
+                    try:
+                        await member.add_roles(banned_role, reason="Auto-assigned on join due to an active case")
+                        logger.ok(f"Assigned banned role to {member.name}", debug=True)
+                    except Exception as e:
+                        logger.error(f"Failed to assign role to {member.name}: {e}", debug=False)
+                else:
+                    logger.warn(f"Banned role with ID {banned_role_id} not found in guild.", debug=False)
+            except Exception as g:
+                logger.error(g, debug=False)
                 pass
 
 
