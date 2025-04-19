@@ -182,7 +182,8 @@ class ConfirmCancelView(View):
             except:
                 role = None
             try:
-                sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
+                # sent_message = await queue_channel.send(f"{role.mention or 'Invalid role configured'}",embed=case_embed, view=review_view)
+                sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
             except:
                 sent_message = await queue_channel.send(f"{'Invalid role configured'}",embed=case_embed, view=review_view)
             review_view.message = sent_message

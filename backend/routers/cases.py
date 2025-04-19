@@ -202,8 +202,8 @@ async def create_case(request: Request, payload: CreateCase):
     updated_proof_links = []
 
     try:
-        # Ensure that 'temp_downloads' directory exists
-        temp_downloads_dir = 'temp_downloads'
+        # Ensure 'temp_downloads' directory exists with an absolute path
+        temp_downloads_dir = os.path.abspath('temp_downloads')
         if not os.path.exists(temp_downloads_dir):
             os.makedirs(temp_downloads_dir)  # Create directory if it doesn't exist
 
