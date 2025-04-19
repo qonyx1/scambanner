@@ -9,14 +9,16 @@ class Version(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="version")
-    # @requires_owner()  # Ensure only the owner can use this command
-    async def version(self, interaction):
+    @requires_owner()  # Ensure only the owner can use this command
+    async def version(self, interaction) -> None:
         await interaction.response.send_message(
             embed = nextcord.Embed(
-                title = "Version Comparison",
-                color = nextcord.Color.orange() 
+                title = "Bot Version",
+                description = "Compare the latest versions and determine if you need to run /update.",
+                color = nextcord.Color.green() 
             ).add_field(name = "Local Version", value = local_version).add_field(name = "GitHub Version", value = version)
         )
+        return
 
 
 def setup(bot):

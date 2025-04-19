@@ -44,7 +44,7 @@ async def root():
     if os.path.exists(file_path):
         with open(file_path, "r") as file:
             content = file.read()
-        
+
         name = system_config["discord"]["bot_name"]
         invite = system_config["discord"]["bot_invite"]
         content = content.replace("[BOTNAME]", name)
@@ -52,7 +52,8 @@ async def root():
 
         return HTMLResponse(content=content)
     else:
-        return {"code": 1, "body": "HTML file not found"}
+        return HTMLResponse(content="<h1>An error occured</h1><body>Nighthawk backend is running, but this page cannot be displayed. Please contact the system administrator.</body>", status_code=500)
+
     
 if __name__ == "__main__":     # Main starter
 
