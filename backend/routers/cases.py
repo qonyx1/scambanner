@@ -385,8 +385,7 @@ async def dump(request: Request, payload: DumpCases):
     if system_config["api"]["case_dump_password_needed"] != False:
         if not await authorize_action(payload.master_password, payload.api_key, "case_dump"):
             return {"code": 1, "body": "You are not authorized to run this action."}
-        # if payload.master_password != system_config["api"]["master_password"]:
-        #     return {"code": 1, "body": "You are not authorized to run this action."}
+
     try:
         cases_cursor = database["cases"].find()
         cases = []
