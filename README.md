@@ -1,5 +1,5 @@
 [![Python Version](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Nextcord Version](https://img.shields.io/badge/nextcord-v2.6.1-blue?logo=discord&logoColor=white)](https://github.com/nextcord/nextcord)
+[![Nextcord Version](https://img.shields.io/badge/nextcord-v3.1.0-blue?logo=discord&logoColor=white)](https://github.com/nextcord/nextcord)
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
