@@ -6,7 +6,7 @@ import time
 import requests
 from utility import logger
 from main import local_version
-from utilities import SystemConfig
+from utilities import SystemConfig, blacklist_check
 
 system_config = SystemConfig.system_config
 start_time = time.time()
@@ -39,6 +39,7 @@ class Help(commands.Cog):
 
     # This command will give helpful information about the bot
     @nextcord.slash_command(name="help", description="View important bot information.")
+    @blacklist_check()
     async def help(self, interaction: nextcord.Interaction):
         try:
             cpu_percent = psutil.cpu_percent(interval=1)

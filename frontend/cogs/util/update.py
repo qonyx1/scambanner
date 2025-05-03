@@ -1,6 +1,6 @@
 import nextcord
 from nextcord.ext import commands
-from utilities import requires_owner
+from utilities import requires_owner, blacklist_check
 from utility import logger
 import os
 import asyncio
@@ -11,6 +11,7 @@ class Update(commands.Cog):
 
     @nextcord.slash_command(name="update", description="Update the bot to the latest version available.")
     @requires_owner()
+    @blacklist_check()
     async def update(self, interaction: nextcord.Interaction, restart: bool):
         
         if restart:

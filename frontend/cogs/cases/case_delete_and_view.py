@@ -4,7 +4,7 @@ import json
 import asyncio
 from nextcord.ext import commands
 from data import Data
-from utilities import SystemConfig, check_if_main_channel, requires_owner
+from utilities import SystemConfig, check_if_main_channel, requires_owner, blacklist_check
 from utility import logger, webhook_logger
 from typeguard import typechecked
 from typing import Any, Optional, Callable
@@ -43,10 +43,12 @@ class Cases(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="case")
+    @blacklist_check()
     async def case(self, interaction: nextcord.Interaction):
         pass  # Placeholder command root
 
     @case.subcommand(name="fetch", description="Fetch a case from the database.")
+    @blacklist_check()
     async def fetch(self, interaction: nextcord.Interaction, case_id: str):
         await interaction.response.defer()
 
@@ -81,6 +83,7 @@ class Cases(commands.Cog):
 
     @case.subcommand(name="delete", description="Delete a case from the database.")
     @requires_owner()
+    @blacklist_check()
     async def delete(self, interaction: nextcord.Interaction, case_id: str):
         await interaction.response.defer()
 

@@ -1,5 +1,6 @@
 import nextcord
 from nextcord.ext import commands
+from utilities import blacklist_check
 import time
 from data import Data
 
@@ -8,6 +9,7 @@ class Ping(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="ping", description="Check bot, Discord API, and MongoDB latency.")
+    @blacklist_check()
     async def ping(self, interaction: nextcord.Interaction):
         start_time = time.perf_counter()
         await interaction.response.defer()

@@ -1,6 +1,6 @@
 import nextcord
 from nextcord.ext import commands
-from utilities import requires_owner
+from utilities import requires_owner, blacklist_check
 from utility import logger
 import os
 import asyncio
@@ -11,6 +11,7 @@ class Restart(commands.Cog):
 
     @nextcord.slash_command(name="restart", description="Restart the bot.")
     @requires_owner()
+    @blacklist_check()
     async def restart(self, interaction: nextcord.Interaction):
         await interaction.response.send_message(
             embed = nextcord.Embed(

@@ -1,7 +1,7 @@
 import nextcord
 from nextcord.ext import commands
 import asyncio
-from utilities import requires_owner
+from utilities import requires_owner, blacklist_check
 
 class Status(commands.Cog):
     def __init__(self, bot):
@@ -20,6 +20,7 @@ class Status(commands.Cog):
 
     @nextcord.slash_command(name="setstatus", description="Change the bot's status and activity.")
     @requires_owner()
+    @blacklist_check()
     async def setstatus(
         self,
         interaction: nextcord.Interaction,

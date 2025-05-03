@@ -36,6 +36,17 @@ async def check_if_main_channel(self, interaction: nextcord.Interaction) -> bool
         return True
     else: return False
 
+@typechecked
+@staticmethod
+async def check_flag_status(guild_id: int, flag_name: str) -> bool:
+    flag = db["flags"].find_one({"guild_id": guild_id, "flag_name": flag_name})
+    
+    if flag:
+        return flag.get("status", False)
+    else:
+        return False
+    return False
+
 def requires_owner() -> None:
     def decorator(func):
         @wraps(func)
@@ -50,6 +61,25 @@ def requires_owner() -> None:
                     ephemeral=True
                 )
                 return
+        return wrapper
+    return decorator
+
+def blacklist_check():
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(self, interaction: Interaction, *args, **kwargs):
+            blacklist_entry = Data.database.blacklists.find_one({"user_id": interaction.user.id})
+
+            if blacklist_entry is not None:
+                embed = nextcord.Embed(
+                    title="Blacklisted",
+                    description="You have been blacklisted from interacting with this bot."
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+
+            return await func(self, interaction, *args, **kwargs)
+
         return wrapper
     return decorator
 
@@ -86,42 +116,6 @@ def build_case_embed(responsible_guild: nextcord.Guild, accused: nextcord.User, 
             inline=False
         )
     return embed
-
-class UnbanButton(Button):
-    def __init__(self, guild_id: int, user_id: int):
-        super().__init__(
-            style=ButtonStyle.secondary,
-            label="Unban from this server",
-            custom_id=f"unban:{guild_id}:{user_id}",
-        )
-
-    async def callback(self, interaction: Interaction):
-        if not interaction.user.guild_permissions.ban_members:
-            await interaction.response.send_message(
-                "*You do not have permission to unban members in this server.*",
-                ephemeral=True
-            )
-            return
-        
-        return await interaction.response.send_message("*Due to security concerns, this command has been disabled until further notice. Feel free to [contribute here!](https://github.com/qonyx1/scambanner)*", ephemeral=True)
-
-        # guild_id, user_id = map(int, self.custom_id.split(":")[1:])
-        # try:
-        #     guild = await interaction.client.fetch_guild(guild_id)
-        #     user = await interaction.client.fetch_user(user_id)
-        #     await guild.unban(user, reason=f"Manual unban by {interaction.user.id}")
-        #     await interaction.response.send_message(
-        #         f"*{user.name} has been unbanned from the server.*",
-        #         ephemeral=True
-        #     )
-        # except Forbidden:
-        #     await interaction.response.send_message("*I don’t have permission to unban in this server.*", ephemeral=True)
-        # except Exception as e:
-        #     await interaction.response.send_message(f"*Failed to unban this member. Are they banned?*", ephemeral=True)
-
-class TemporaryUnbanView(View):
-    def __init__(self):
-        super().__init__(timeout=None)
 
 async def send_case_logs(self, case_id: str) -> bool:
     try:
@@ -160,11 +154,21 @@ async def send_case_logs(self, case_id: str) -> bool:
                         guild = await self.bot.fetch_guild(int(guild_id))
                         channel = await guild.fetch_channel(int(channel_id))
                         try:
-                            view = None
-                            if accused != "NaN" and responsible_guild != "NaN":
-                                view = TemporaryUnbanView()
-                                view.add_item(UnbanButton(guild_id=responsible_guild.id, user_id=accused.id))
-                            await channel.send(embed=embed, view=view)
+                            message = await channel.send(embed=embed)
+
+                            # Create a thread for proof links
+                            if case_request.get("proof"):
+                                try:
+                                    thread = await message.create_thread(
+                                        name="Proof Quickview",
+                                        auto_archive_duration=1440  # 24 hours
+                                    )
+                                    proof_links = case_request.get("proof", [])
+                                    await thread.send("\n".join(proof_links))
+                                except Exception as thread_error:
+                                    logger.error(f"[SEND_CASE_LOGS] Failed to create thread in {guild_id}/{channel_id}: {thread_error}")
+                                    pass
+
                         except Exception as d:
                             logger.error(f"[SEND_CASE_LOGS] Failed to send to {guild_id}/{channel_id}: {d}")
                             pass
@@ -172,6 +176,6 @@ async def send_case_logs(self, case_id: str) -> bool:
                         await asyncio.sleep(0.2)
                     except Exception as e:
                         logger.error(f"[SEND_CASE_LOGS] Failed to send to {guild_id}/{channel_id}: {e}")
-
     except Exception as e:
         logger.error(f"[SEND_CASE_LOGS] {e}")
+

@@ -82,12 +82,15 @@ async def proxy_proof_links(proof_links):
                         updated_proof_links.append(new_link)
                     except Exception as e:
                         logger.error(f"[UPLOAD_ERROR] Failed to upload {filename}: {e}")
+                        updated_proof_links.append(link) # Even if it's a discord link and failed to upload, we still want to keep the original link so we don't lose potential evidence
                     finally:
                         os.remove(downloaded_file)
                 else:
+                    updated_proof_links.append(link)
                     logger.error(f"[UPLOAD_ERROR] Failed to download proof file: {link}")
             else:
                 updated_proof_links.append(link)
+                
         return updated_proof_links
     else:
         return proof_links
@@ -138,7 +141,9 @@ class ConfirmCancelView(View):
         self.reason = reason
         self.proof_links = proof_links
         self.investigator = investigator
+        logger.ok(f"ConfirmCancelView Proof Links: {self.proof_links}", debug=True)
 
+    
     @nextcord.ui.button(label="Confirm", style=nextcord.ButtonStyle.green, custom_id="confirm_case")
     async def confirm(self, button: Button, interaction: nextcord.Interaction):
         if interaction.user != self.message.author:
@@ -230,6 +235,7 @@ class CaseReviewView(View):
             return await interaction.response.send_message(
                 "*You can't approve your own case!*", ephemeral=True
             )
+        
 
         await self.disable_buttons_and_update_embed(interaction, "approve")
         await interaction.response.defer()
@@ -461,6 +467,9 @@ class CaseCreation(commands.Cog):
                 channel_id = entry.get("channel_id")
                 role_id = entry.get("role_id")
 
+                if Data.database.blacklists.find_one({"user_id": message.author.id}):
+                    return
+
                 if int(channel_id) == message.channel.id:
                     if role_id:
                         role = message.guild.get_role(int(role_id))
@@ -584,7 +593,13 @@ class CaseCreation(commands.Cog):
 
                     qa_view = ConfirmCancelView(self.bot, message, accused_id, reason, proof_links, investigator_final)
                     self.bot.add_view(qa_view)
-                    await message.reply(embed=confirmation_embed, view=qa_view)
+
+                    warning_embed = nextcord.Embed(
+                        title="⚠️ Warning",
+                        description="In order to comply with our policies regarding privacy, please confirm only if the victim is aware that their media, including screenshots or videos **could be shared publicly** and possibly be uploaded to a third-party service.\n\nYou can find the Privacy Policy by visiting the site for the bot or the 'Privacy Policy' link in the bot invite process.",
+                        color=nextcord.Color.yellow()
+                    )
+                    await message.reply(embeds=[confirmation_embed, warning_embed], view=qa_view)
                 else:
                     return
 

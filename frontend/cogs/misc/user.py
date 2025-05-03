@@ -2,7 +2,7 @@ import nextcord, requests
 from data import Data
 from utility import logger
 import json
-from utilities import SystemConfig
+from utilities import SystemConfig, blacklist_check
 
 system_config = SystemConfig.system_config
 url = system_config["api"]["url"]
@@ -14,11 +14,13 @@ class Users(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="cases")
+    @blacklist_check()
     async def cases(self, interaction):
         return
     
 
     @cases.subcommand(name="user", description="Evaluate if someone is registered in the database.")
+    @blacklist_check()
     async def user(self, interaction, user: nextcord.User):
         logger.output(int(str(user.id).strip("<@!>")))
         request = requests.post(

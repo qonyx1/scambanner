@@ -1,7 +1,7 @@
 import nextcord
 from nextcord.ext import commands
 from utility import logger
-from utilities import SystemConfig
+from utilities import SystemConfig, blacklist_check
 system_config = SystemConfig.system_config
 from data import Data
 database = Data.database
@@ -18,10 +18,12 @@ class Stats(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="stats", description="Commands related to stats")
+    @blacklist_check()
     async def stats(self, interaction: nextcord.Interaction):
         pass
 
     @stats.subcommand(name="user", description="View the activity of a user.")
+    @blacklist_check()
     async def user(self, interaction: nextcord.Interaction, member: nextcord.Member, timeframe: str = nextcord.SlashOption(choices={"14 Days": "14d", "7 Days": "7d", "30 Days": "30d"})):
         await interaction.response.defer()
 

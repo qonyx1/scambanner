@@ -2,7 +2,7 @@ import nextcord, requests
 from nextcord.ext import commands
 from data import Data
 from typeguard import typechecked
-from utilities import SystemConfig, requires_owner
+from utilities import SystemConfig, requires_owner, blacklist_check
 from utility import logger, webhook_logger
 
 system_config = SystemConfig.system_config
@@ -17,6 +17,7 @@ class CaseUtils(commands.Cog):
 
     @servers.subcommand(name="fetch", description="Check if a server is whitelisted.")
     @requires_owner()
+    @blacklist_check()
     async def fetch(self, interaction, guild_id: str = None):
         if not guild_id:
             guild_id = str(interaction.guild.id)
@@ -55,6 +56,7 @@ class CaseUtils(commands.Cog):
 
     @servers.subcommand(name="list", description="List all whitelisted servers and their logging channels.")
     @requires_owner()
+    @blacklist_check()
     async def list_whitelisted(self, interaction):
         try:
             whitelist = Data.database["bot"]["whitelists"].find()
@@ -100,6 +102,7 @@ class CaseUtils(commands.Cog):
 
     @servers.subcommand(name="add", description="Whitelist a server to create cases.")
     @requires_owner()
+    @blacklist_check()
     async def add(self, interaction, guild_id: str, channel_id: str, role_id: str):
         if not all(id_.isdigit() for id_ in [guild_id, channel_id, role_id]):
             return await interaction.response.send_message("*All IDs must be numeric.*")
@@ -140,6 +143,7 @@ class CaseUtils(commands.Cog):
 
     @servers.subcommand(name="remove", description="Unwhitelist a server.")
     @requires_owner()
+    @blacklist_check()
     async def remove(self, interaction, guild_id: str):
         if not guild_id.isdigit():
             return await interaction.response.send_message("*Guild ID must be a number.*")

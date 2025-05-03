@@ -1,7 +1,7 @@
 import nextcord
 import httpx
 from nextcord.ext import commands
-from utilities import requires_owner, system_config
+from utilities import requires_owner, system_config, blacklist_check
 from utility import logger
 import os
 import asyncio
@@ -11,11 +11,20 @@ class ServerSync(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="bans")
+    @blacklist_check()
     async def bans(self, interaction: nextcord.Interaction):
         return
     
     @bans.subcommand(name="sync", description="Ban all scammers in our database from our server. This is required for API key moderations.")
+    @blacklist_check()
     async def sync(self, interaction: nextcord.Interaction):
+        
+        if interaction.user.id != interaction.guild.owner.id:
+            return await interaction.response.send_message(
+                "You are not the owner of this server.",
+                ephemeral=True
+            )
+            
         await interaction.response.defer()
 
         try:
@@ -30,7 +39,7 @@ class ServerSync(commands.Cog):
         except Exception as x:
             logger.error(x, debug=False)
 
-        logger.warn(case_dump_request)
+        logger.warn(case_dump_request, debug=True)
 
         try:
             names = []
@@ -53,7 +62,7 @@ class ServerSync(commands.Cog):
                         names.append(user_obj.global_name)
                         logger.ok(f"Banned {user_obj} from the server.", debug=True)
 
-                        await asyncio.sleep(0.1)  # Sleep for 200ms to avoid hitting the rate limit
+                        await asyncio.sleep(0.1)  # Sleep for 200ms cuz ratelimit
                         
                     except Exception as x:
                         logger.warn(f"Failed to fetch/ban user {accused_id} from the server. Skipping.", debug=True)

@@ -1,6 +1,6 @@
 import nextcord
 from nextcord.ext import commands
-from utilities import requires_owner, SystemConfig
+from utilities import requires_owner, SystemConfig, blacklist_check
 from data import Data
 
 db = Data.database
@@ -11,6 +11,7 @@ class Logged(commands.Cog):
         self.bot = bot
 
     @nextcord.slash_command(name="set")
+    @blacklist_check()
     async def set(self, interaction: nextcord.Interaction):
         # This command serves as a parent for subcommands.
         await interaction.response.send_message("Use a subcommand with /set", ephemeral=True)
@@ -20,6 +21,7 @@ class Logged(commands.Cog):
         description="Set a channel that will receive notifications on new cases created by the bot"
     )
     # @requires_owner()
+    @blacklist_check()
     async def log_channel(self, interaction: nextcord.Interaction, channel: nextcord.TextChannel):
         if channel.guild != interaction.guild:
             embed = nextcord.Embed(

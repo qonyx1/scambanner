@@ -1,6 +1,6 @@
 import nextcord
 from nextcord.ext import commands
-from utilities import requires_owner  # Assuming this is where the decorator is defined.
+from utilities import requires_owner, blacklist_check  # Assuming this is where the decorator is defined.
 from main import local_version
 from main import version
 
@@ -10,6 +10,7 @@ class Version(commands.Cog):
 
     @nextcord.slash_command(name="version", description="Compare the local project version to the remote GitHub version.")
     @requires_owner()  # Ensure only the owner can use this command
+    @blacklist_check()
     async def version(self, interaction) -> None:
         if local_version != version:
             col = nextcord.Color.red()

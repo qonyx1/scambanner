@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands
 import secrets, string, time
 from generateApiKey import generateApiKey
-from utilities import requires_owner, SystemConfig
+from utilities import requires_owner, SystemConfig, blacklist_check
 from data import Data
 import re
 
@@ -32,13 +32,10 @@ def parse_rate_limit(rate_str: str):
             "d": 86400   # days
         }
 
-        # Calculate the time window based on the unit
         time_window = time_multipliers[unit]
 
-        # If count is 1, we interpret it as 1 request per the time window
         return count, time_window
 
-    # If no match found, raise an exception
     raise ValueError(f"Invalid rate limit format: {rate_str}")
 
 class Keys(commands.Cog):
@@ -47,30 +44,57 @@ class Keys(commands.Cog):
 
     @nextcord.slash_command(name="api_key", description="Generate API keys.")
     @requires_owner()
+    @blacklist_check()
     async def api_key(self, interaction: nextcord.Interaction):
         return
+	
+    @api_key.subcommand(name="drop", description="⚠️ Deletes all API keys from the database.")
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    @requires_owner()
+    @blacklist_check()
+    async def drop(self, interaction: nextcord.Interaction):
+        class ConfirmModal(nextcord.ui.Modal):
+            def __init__(self):
+                super().__init__(title="Confirm Deletion")
+                self.confirmation = nextcord.ui.TextInput(
+                    label="Type 'Yes, do as I say!' to confirm",
+                    placeholder="Enter confirmation text here",
+                    required=True
+                )
+                self.add_item(self.confirmation)
+
+            async def callback(self, interaction: nextcord.Interaction):
+                if self.confirmation.value == "Yes, do as I say!":
+                    db["keys"].delete_many({})
+                    await interaction.response.send_message("*All API keys have been deleted.*", ephemeral=True)
+                else:
+                    await interaction.response.send_message(
+                        "Incorrect confirmation text. No API keys were deleted.", ephemeral=True
+                    )
+
+        # Send the modal to the user
+        await interaction.response.send_modal(ConfirmModal())
 
     @api_key.subcommand(name="generate", description="Generate an API key with certain permissions.")
     @commands.cooldown(1, 10, commands.BucketType.user)
     @requires_owner()
+    @blacklist_check()
     async def generate(
         self,
         interaction: nextcord.Interaction,
+        friendly_name: str,
+        ratelimit: str,
         create_case: bool,
         fetch_case: bool,
         delete_case: bool,
-        case_dump: bool,
-        ratelimit: str
+        case_dump: bool
     ):
         try:
-            # Parse the ratelimit input (this will not default to 60 if it's invalid)
             max_requests, time_window = parse_rate_limit(ratelimit)
         except ValueError as e:
-            # If there is an error parsing the rate limit, respond with an error
             await interaction.response.send_message(f"Error parsing rate limit: {str(e)}", ephemeral=True)
             return
 
-        # Setup the rate limit dictionary for the API key
         ratelimit_dict = {
             "max_requests": max_requests,
             "time_window": time_window,
@@ -78,13 +102,12 @@ class Keys(commands.Cog):
             "request_count": 0
         }
 
-        # Generate the API key
         key = await getRandomApiKey()
         db["keys"].find_one_and_delete({"_id": key})
 
-        # Insert the new API key into the database
         db["keys"].insert_one({
             "_id": key,
+            "friendly_name": friendly_name,
             "create_case": create_case,
             "fetch_case": fetch_case,
             "delete_case": delete_case,
@@ -92,15 +115,15 @@ class Keys(commands.Cog):
             "ratelimit": ratelimit_dict,
         })
 
-        # Fetch the newly inserted API key info
         info = db["keys"].find_one({"_id": key})
+
         embed = nextcord.Embed(
             title="API Key Generated",
             description=f"This key has been generated, make sure nobody is watching!\n`{key}`",
             color=nextcord.Color.green()
         )
 
-        # Add the permissions to the embed
+        embed.add_field(name="Name", value=friendly_name, inline=False)
         for perm_key, description in {
             "create_case": "Create Case",
             "fetch_case": "Fetch Case",
@@ -110,7 +133,6 @@ class Keys(commands.Cog):
             value = info.get(perm_key, False)
             embed.add_field(name=description, value=turn(value), inline=True)
 
-        # Format rate limit for embed
         rl = info.get("ratelimit", {})
         if isinstance(rl, dict):
             rl_text = f"Max Requests: {rl.get('max_requests', 'N/A')}\nTime Window: {rl.get('time_window', 'N/A')} seconds"
@@ -123,10 +145,11 @@ class Keys(commands.Cog):
     @api_key.subcommand(name="list", description="List all API keys and their permissions.")
     @commands.cooldown(1, 10, commands.BucketType.user)
     @requires_owner()
+    @blacklist_check()
     async def list_keys(self, interaction: nextcord.Interaction):
         keys = list(db["keys"].find({}))
         if not keys:
-            await interaction.response.send_message("No API keys found.", ephemeral=True)
+            await interaction.response.send_message("*No API keys found.*", ephemeral=True)
             return
 
         embed = nextcord.Embed(
@@ -139,6 +162,7 @@ class Keys(commands.Cog):
 
         for idx, key_info in enumerate(keys[:10], start=1):  # Limit shown keys
             key = key_info.get("_id", "N/A")
+            friendly_name = key_info.get("friendly_name", "Unnamed")
             perms = []
             for perm, label in {
                 "create_case": "🆕 Create",
@@ -157,12 +181,12 @@ class Keys(commands.Cog):
                 rl_summary = f"{rl.get('max_requests', '?')} req / {rl.get('time_window', '?')}s"
 
             embed.add_field(
-                name=f"API Key #{idx}",
+                name=f"API Key #{idx} - {friendly_name}",
                 value=f"Permissions: {perm_text}\nRate Limit: {rl_summary}",
                 inline=False
             )
 
-            key_lines.append(f"{idx}. `{key}`")
+            key_lines.append(f"{idx}. `{key}` ({friendly_name})")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -172,17 +196,28 @@ class Keys(commands.Cog):
     @api_key.subcommand(name="delete", description="Delete an API key.")
     @commands.cooldown(1, 10, commands.BucketType.user)
     @requires_owner()
-    async def delete(self, interaction: nextcord.Interaction, key: str):
-        info = db["keys"].find_one({"_id": key})
+    @blacklist_check()
+    async def delete(self, interaction: nextcord.Interaction, key: str = None, friendly_name: str = None):
+        if (key and friendly_name) or (not key and not friendly_name):
+            await interaction.response.send_message(
+                "You must specify either an API key or a friendly name, but not both.", ephemeral=True
+            )
+            return
+
+        if key:
+            info = db["keys"].find_one({"_id": key})
+        else:
+            info = db["keys"].find_one({"friendly_name": friendly_name})
+
         if not info:
             await interaction.response.send_message("API key not found.", ephemeral=True)
             return
 
-        db["keys"].find_one_and_delete({"_id": key})
+        db["keys"].find_one_and_delete({"_id": info["_id"]})
 
         embed = nextcord.Embed(
             title="API Key Deleted",
-            description=f"The API key has been deleted!\n`{key}`",
+            description=f"The API key has been deleted!\n`{info['_id']}`",
             color=nextcord.Color.red()
         )
 
@@ -204,6 +239,7 @@ class Keys(commands.Cog):
         embed.add_field(name="Ratelimit", value=rl_text, inline=False)
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 def setup(bot):
     bot.add_cog(Keys(bot))

@@ -2,7 +2,7 @@ import nextcord
 from nextcord.ext import commands
 from nextcord import SlashOption, Embed
 from data import Data
-from utilities import requires_owner
+from utilities import requires_owner, blacklist_check
 import re
 
 db = Data.database
@@ -17,11 +17,13 @@ class Shortcuts(commands.Cog):
 
     @nextcord.slash_command(name="shortcut", description="Manage shortcuts for reasoning.")
     @requires_owner()
+    @blacklist_check()
     async def shortcut(self, interaction: nextcord.Interaction):
         pass  # placehold
 
     @shortcut.subcommand(name="add", description="Add a new shortcut.")
     @requires_owner()
+    @blacklist_check()
     async def add(
         self,
         interaction: nextcord.Interaction,
@@ -54,6 +56,7 @@ class Shortcuts(commands.Cog):
 
     @shortcut.subcommand(name="remove", description="Remove an existing shortcut.")
     @requires_owner()
+    @blacklist_check()
     async def remove(
         self,
         interaction: nextcord.Interaction,
@@ -82,6 +85,7 @@ class Shortcuts(commands.Cog):
 
     @shortcut.subcommand(name="list", description="List all available shortcuts.")
     @requires_owner()
+    @blacklist_check()
     async def list(
         self,
         interaction: nextcord.Interaction
